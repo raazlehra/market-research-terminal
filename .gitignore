@@ -1,0 +1,60 @@
+.env
+.env.*
+backend/.env
+backend/.env.*
+!.env.example
+!**/.env.example
+
+# Local tool/runtime state
+.repomind/
+.git-empty-backup-20260901/
+backend/paper_state.json
+backend/paper_state.json.bak
+paper_state.json
+*.log
+*.bak
+*.tmp
+build_*.txt
+temp_delete_*.txt
+tmp/
+temp/
+.cache/
+
+# Build output and dependencies
+node_modules/
+dist/
+build/
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage output
+.coverage
+coverage/
+htmlcov/
+
+# Runtime databases
+fno.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Token and API key files
+*token*.txt
+*token*.json
+*token*.env
+*session*.json
+*credential*.json
+*secret*.json
+*api*key*.txt
+*apikey*.txt
+*.key
+*.pem
+*.p12
