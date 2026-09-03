@@ -118,8 +118,8 @@ export function AutoBotControlsPanel() {
 
       <label className="mt-3 block space-y-2 text-xs text-slate-400">
         <div className="flex items-center justify-between gap-3">
-          <span>Min Confidence</span>
-          <span className="font-mono font-bold text-slate-100">{bot.minConfidence}%</span>
+          <span>Min Rule Score</span>
+          <span className="font-mono font-bold text-slate-100">{bot.minConfidence}/100</span>
         </div>
         <input
           type="range"
@@ -161,7 +161,7 @@ export function AutoBotControlsPanel() {
         <label className="space-y-1 text-slate-400 sm:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <span>Min Candle Score</span>
-            <span className="font-mono font-bold text-slate-100">{bot.minCandleScore}%</span>
+            <span className="font-mono font-bold text-slate-100">{bot.minCandleScore}/100</span>
           </div>
           <input
             type="range"
@@ -199,7 +199,7 @@ export function AutoBotControlsPanel() {
 
         <label className="space-y-1 text-slate-400 sm:col-span-2">
           <div className="flex items-center justify-between gap-3">
-            <span>Pattern Confidence Cap</span>
+            <span>Pattern Score Cap</span>
             <span className="font-mono font-bold text-slate-100">+/-{bot.maxPatternConfidenceAdjustment}</span>
           </div>
           <input
@@ -227,7 +227,7 @@ export function AutoBotControlsPanel() {
         <label className="space-y-1 text-slate-400 sm:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <span>Guard Candle Score</span>
-            <span className="font-mono font-bold text-slate-100">{bot.regimeGuardMinCandleScore}%</span>
+            <span className="font-mono font-bold text-slate-100">{bot.regimeGuardMinCandleScore}/100</span>
           </div>
           <input
             type="range"

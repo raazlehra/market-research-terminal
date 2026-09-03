@@ -1,4 +1,18 @@
+import time
+from datetime import datetime
 from typing import Any, Dict, Optional
+from zoneinfo import ZoneInfo
+
+_IST = ZoneInfo("Asia/Kolkata")
+_SUPPORTED_RESOLUTION_SECONDS = {
+    "1": 60,
+    "5": 300,
+    "15": 900,
+    "60": 3600,
+    "D": 86400,
+}
+_MARKET_CLOSE_HOUR = 15
+_MARKET_CLOSE_MINUTE = 30
 
 
 def ema(closes: list[float], period: int) -> float:
@@ -20,8 +34,13 @@ def atr(candles: list[list[Any]], period: int = 14) -> float:
     return sum(recent) / len(recent) if recent else 0
 
 
-def build_context(quote: Dict[str, Any], history: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    candles = history.get("candles", [])
+def build_context(
+    quote: Dict[str, Any],
+    history: Dict[str, Any],
+    resolution: str = "15",
+    now: int | None = None,
+) -> Optional[Dict[str, Any]]:
+    candles = _completed_candles(history.get("candles", []), resolution, now)
     if not candles or len(candles) < 50:
         return None
 
@@ -85,3 +104,58 @@ def _vwap(candles: list[list[Any]], fallback: float) -> float:
         pv += price * vol
         tv += vol
     return pv / tv if tv else fallback
+
+
+def _completed_candles(raw: Any, resolution: str = "15", now: int | None = None) -> list[list[float]]:
+    if not isinstance(raw, list):
+        return []
+    timeframe_seconds = _resolution_seconds(resolution)
+    if timeframe_seconds is None:
+        return []
+    current_time = int(time.time()) if now is None else int(now)
+    by_timestamp: dict[int, list[float]] = {}
+    for candle in raw:
+        if not isinstance(candle, (list, tuple)) or len(candle) < 6:
+            continue
+        try:
+            ts = _normalize_timestamp(candle[0])
+            values = [float(ts), *[float(value or 0) for value in candle[1:6]]]
+        except (TypeError, ValueError):
+            continue
+        high = values[2]
+        low = values[3]
+        close = values[4]
+        if ts <= 0 or high < low or close <= 0:
+            continue
+        completion_time = _candle_completion_time(ts, resolution, timeframe_seconds)
+        if completion_time is None or completion_time > current_time:
+            continue
+        by_timestamp[ts] = values
+    return [by_timestamp[ts] for ts in sorted(by_timestamp)]
+
+
+def _resolution_seconds(resolution: str) -> int | None:
+    return _SUPPORTED_RESOLUTION_SECONDS.get(str(resolution).strip().upper())
+
+
+def _normalize_timestamp(value: Any) -> int:
+    timestamp = float(value)
+    if timestamp >= 10_000_000_000:
+        timestamp /= 1000
+    return int(timestamp)
+
+
+def _candle_completion_time(ts: int, resolution: str, timeframe_seconds: int) -> int | None:
+    if str(resolution).strip().upper() != "D":
+        return ts + timeframe_seconds
+
+    candle_date = datetime.fromtimestamp(ts, _IST)
+    if candle_date.weekday() >= 5:
+        return None
+    session_close = candle_date.replace(
+        hour=_MARKET_CLOSE_HOUR,
+        minute=_MARKET_CLOSE_MINUTE,
+        second=0,
+        microsecond=0,
+    )
+    return int(session_close.timestamp())

@@ -46,7 +46,7 @@ export function AutoBotDecisionLogPanel({ entries, onClear }: AutoBotDecisionLog
                 <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-500">
                   {entry.symbol && <span>{entry.symbol}</span>}
                   {entry.side && <span>{entry.side}</span>}
-                  {entry.confidence !== undefined && <span>{Math.round(entry.confidence)}%</span>}
+                  {entry.confidence !== undefined && <span>score {Math.round(entry.confidence)}/100</span>}
                   {entry.strategy && <span>{entry.strategy}</span>}
                 </div>
               )}

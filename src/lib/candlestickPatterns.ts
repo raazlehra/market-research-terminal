@@ -30,7 +30,7 @@ const NO_SIGNAL: CandlestickSignal = {
   entry: null,
   sl: null,
   confirmed: false,
-  reason: "No high-probability candle pattern on the latest candles.",
+  reason: "No strong candle pattern on the latest completed candles.",
   targetHint: "Use normal trend, support, resistance, and risk rules.",
 };
 

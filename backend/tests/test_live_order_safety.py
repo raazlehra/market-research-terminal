@@ -25,6 +25,7 @@ class LiveOrderSafetyTests(unittest.TestCase):
         self.original_get_tick = paper_routes.fyers.get_tick
         self.original_paper_balance = paper_routes.paper.balance
         self.original_paper_place = paper_routes.paper.place
+        self.original_paper_exit = paper_routes.paper.exit
         self.modify_order = AsyncMock(return_value={"ok": True})
         self.cancel_order = AsyncMock(return_value={"ok": True})
         self.exit_position = AsyncMock(return_value={"ok": True})
@@ -32,6 +33,7 @@ class LiveOrderSafetyTests(unittest.TestCase):
         self.place_order = AsyncMock(return_value={"ok": True})
         self.quotes = AsyncMock(return_value={"d": [{"symbol": "NSE:RELIANCE-EQ", "ltp": 100}]})
         self.paper_place = Mock(return_value={"ok": True, "id": "paper-1", "fill": 100})
+        self.paper_exit = Mock(return_value={"status": "EXITED", "remainingQty": 0})
         self.paper_balance = Mock(return_value={"available": 100000, "netPnl": 0})
         trading_routes.fyers.place_order = self.place_order
         trading_routes.fyers.modify_order = self.modify_order
@@ -46,6 +48,7 @@ class LiveOrderSafetyTests(unittest.TestCase):
         paper_routes.fyers.get_tick = get_tick
         paper_routes.paper.balance = self.paper_balance
         paper_routes.paper.place = self.paper_place
+        paper_routes.paper.exit = self.paper_exit
         self.client = TestClient(app)
 
     def tearDown(self) -> None:
@@ -59,6 +62,7 @@ class LiveOrderSafetyTests(unittest.TestCase):
         paper_routes.fyers.get_tick = self.original_get_tick
         paper_routes.paper.balance = self.original_paper_balance
         paper_routes.paper.place = self.original_paper_place
+        paper_routes.paper.exit = self.original_paper_exit
 
     def test_live_mutation_routes_are_always_forbidden(self) -> None:
         endpoints = [
@@ -130,6 +134,13 @@ class LiveOrderSafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["ok"])
         self.paper_place.assert_called_once()
+
+    def test_paper_exit_route_is_unaffected(self) -> None:
+        response = self.client.post("/api/paper/exit/paper-1", json={"qty": 1})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "EXITED")
+        self.paper_exit.assert_called_once()
 
 
 if __name__ == "__main__":

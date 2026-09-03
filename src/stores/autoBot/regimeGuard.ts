@@ -9,5 +9,5 @@ export function regimeGuardBlock(
   if (!bot.regimeGuardEnabled) return "";
   if (!bot.guardedRegimes.includes(candleRule.regime.regime)) return "";
   if (candleRule.signal.score >= bot.regimeGuardMinCandleScore) return "";
-  return `regime ${candleRule.regime.regime} needs candle ${bot.regimeGuardMinCandleScore}%`;
+  return `regime ${candleRule.regime.regime} needs candle score ${bot.regimeGuardMinCandleScore}/100`;
 }

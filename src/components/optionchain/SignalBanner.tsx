@@ -47,7 +47,7 @@ export function SignalBanner({
               atmCeConfidence.strength === "WEAK" && "text-slate-400"
             )} />
             <div>
-              <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">ATM {effectiveAtm ? num(effectiveAtm, 0) : "--"} CE Confidence</div>
+              <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">ATM {effectiveAtm ? num(effectiveAtm, 0) : "--"} CE Signal Strength</div>
               <div className="text-[9px] text-slate-400 font-mono">T:{atmCeConfidence?.factors?.trendAlignment ?? 0} G:{atmCeConfidence?.factors?.greeksFavor ?? 0} IV:{atmCeConfidence?.factors?.ivExtreme ?? 0}</div>
             </div>
           </div>
@@ -57,7 +57,7 @@ export function SignalBanner({
               atmCeConfidence.strength === "VERY_STRONG" && "text-emerald-400",
               atmCeConfidence.strength === "STRONG" && "text-emerald-400",
               atmCeConfidence.strength === "WEAK" && "text-slate-400"
-            )}>{atmCeConfidence.score}%</span>
+            )}>{atmCeConfidence.score}/100</span>
           </div>
         </div>
       )}
@@ -78,7 +78,7 @@ export function SignalBanner({
               atmPeConfidence.strength === "WEAK" && "text-slate-400"
             )} />
             <div>
-              <div className="text-[10px] uppercase font-bold tracking-wider text-rose-400">ATM {effectiveAtm ? num(effectiveAtm, 0) : "--"} PE Confidence</div>
+              <div className="text-[10px] uppercase font-bold tracking-wider text-rose-400">ATM {effectiveAtm ? num(effectiveAtm, 0) : "--"} PE Signal Strength</div>
               <div className="text-[9px] text-slate-400 font-mono">T:{atmPeConfidence?.factors?.trendAlignment ?? 0} G:{atmPeConfidence?.factors?.greeksFavor ?? 0} IV:{atmPeConfidence?.factors?.ivExtreme ?? 0}</div>
             </div>
           </div>
@@ -88,7 +88,7 @@ export function SignalBanner({
               atmPeConfidence.strength === "VERY_STRONG" && "text-rose-400",
               atmPeConfidence.strength === "STRONG" && "text-rose-400",
               atmPeConfidence.strength === "WEAK" && "text-slate-400"
-            )}>{atmPeConfidence.score}%</span>
+            )}>{atmPeConfidence.score}/100</span>
           </div>
         </div>
       )}

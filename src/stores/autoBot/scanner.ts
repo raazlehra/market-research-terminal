@@ -95,11 +95,11 @@ export async function runScannerOnce(
     let candidateQuality: ReturnType<typeof evaluateScannerQuality> | null = null;
 
     if (!candidates.length) {
-      setLastAction?.(`Auto-Bot scanning every 15s. Waiting for signal above ${bot.minConfidence}%.`);
+      setLastAction?.(`Auto-Bot scanning every 15s. Waiting for signal score above ${bot.minConfidence}/100.`);
       if (shouldLogRoutine(`no_signal_${scanKey}_${bot.minConfidence}`)) {
         addDecisionLog({
           status: "SKIP",
-          message: `No scanner signal above ${bot.minConfidence}%. Bot remains active and waiting.`,
+          message: `No scanner signal above ${bot.minConfidence}/100. Bot remains active and waiting.`,
           strategy: bot.strategy,
           source: "scanner",
           details: {
@@ -275,8 +275,8 @@ export async function runScannerOnce(
             addDecisionLog({
               status: adjustedConfidence >= bot.minConfidence ? "CHECK" : "BLOCKED",
               message: patternAdjustment.adjustment
-                ? `Pattern confidence adjusted ${patternAdjustment.adjustment > 0 ? "+" : ""}${patternAdjustment.adjustment}: ${patternAdjustment.reason}`
-                : `Pattern confidence unchanged. ${patternAdjustment.reason}`,
+                ? `Pattern score adjusted ${patternAdjustment.adjustment > 0 ? "+" : ""}${patternAdjustment.adjustment}: ${patternAdjustment.reason}`
+                : `Pattern score unchanged. ${patternAdjustment.reason}`,
               symbol,
               side,
               confidence: adjustedConfidence,
@@ -293,7 +293,7 @@ export async function runScannerOnce(
             });
 
             if (adjustedConfidence < bot.minConfidence) {
-              setLastAction?.(`Scanner signal blocked. Pattern-adjusted confidence ${Math.round(adjustedConfidence)}% is below ${bot.minConfidence}%.`);
+              setLastAction?.(`Scanner signal blocked. Pattern-adjusted score ${Math.round(adjustedConfidence)}/100 is below ${bot.minConfidence}/100.`);
               return;
             }
           }

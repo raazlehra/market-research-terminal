@@ -145,7 +145,7 @@ export function OrdersAutomationPanel({ orders, paperOutcomes }: OrdersAutomatio
           <SummaryStat label="Blocked" value={session.blocked} tone={session.blocked ? "amber" : "slate"} />
           <SummaryStat label="Regime Guard" value={session.regimeGuardBlocks} tone={session.regimeGuardBlocks ? "amber" : "slate"} />
           <SummaryStat label="Errors" value={session.errors} tone={session.errors ? "rose" : "slate"} />
-          <SummaryStat label="Best %" value={session.bestConfidence === null ? "--" : `${Math.round(session.bestConfidence)}%`} tone="emerald" />
+          <SummaryStat label="Best Score" value={session.bestConfidence === null ? "--" : `${Math.round(session.bestConfidence)}/100`} tone="emerald" />
         </div>
 
         <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
@@ -302,7 +302,7 @@ export function OrdersAutomationPanel({ orders, paperOutcomes }: OrdersAutomatio
                 <div className="min-w-0">
                   <div className="truncate font-bold text-slate-200">{row.pattern}</div>
                   <div className="mt-0.5 text-[10px] text-slate-500">
-                    seen {row.observed} / score {row.avgScore === null ? "--" : `${Math.round(row.avgScore)}%`} / adj {adjustment.adjustment > 0 ? "+" : ""}{adjustment.adjustment}
+                    seen {row.observed} / score {row.avgScore === null ? "--" : `${Math.round(row.avgScore)}/100`} / adj {adjustment.adjustment > 0 ? "+" : ""}{adjustment.adjustment}
                   </div>
                 </div>
                 <div>
@@ -327,7 +327,7 @@ export function OrdersAutomationPanel({ orders, paperOutcomes }: OrdersAutomatio
         </div>
 
         <div className="mt-2 text-[10px] text-slate-500">
-          Adaptive pattern confidence uses closed paper outcomes plus completed dry-run simulations.
+          Adaptive pattern score adjustment uses closed paper outcomes plus completed dry-run simulations.
         </div>
       </div>
 

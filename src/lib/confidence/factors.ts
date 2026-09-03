@@ -25,8 +25,8 @@ export function calculateIVExtreme(
 ): number {
   let score = 0;
 
-  // IV Percentile (0-10)
-  // Percentile 0-20 = Low IV (good for buying), 80-100 = High IV (risky)
+  // Current-chain-relative IV rank (0-10), not historical IV rank.
+  // Low rank = lower IV than peer strikes in the current chain; high rank = richer IV.
   if (ivPercentile < 30) score += 10;
   else if (ivPercentile < 50) score += 7;
   else if (ivPercentile < 70) score += 4;

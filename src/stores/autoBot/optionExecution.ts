@@ -127,10 +127,10 @@ export async function triggerOptionBotTrade(context: OptionExecutionContext, opt
   }
 
   if (confidence < state.minConfidence) {
-    setBot({ lastAction: `Option Auto-Bot blocked. Confluence ${confidence}% is below ${state.minConfidence}%.` });
+    setBot({ lastAction: `Option Auto-Bot blocked. Confluence score ${confidence}/100 is below ${state.minConfidence}/100.` });
     addDecisionLog({
       status: "BLOCKED",
-      message: `Confluence ${confidence}% is below minimum ${state.minConfidence}%.`,
+      message: `Confluence score ${confidence}/100 is below minimum ${state.minConfidence}/100.`,
       symbol,
       side: "BUY",
       confidence,

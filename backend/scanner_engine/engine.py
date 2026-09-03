@@ -6,7 +6,7 @@ import time
 from typing import Any, Dict, List, Protocol, Set, cast
 
 from ..scanner_symbols import FNO, NIFTY50
-from .indicators import build_context
+from .indicators import _resolution_seconds, build_context
 from .scoring import score_context
 from .signals import detect_signal
 
@@ -109,7 +109,7 @@ class ScannerEngine:
                 fail_count += 1
                 continue
 
-            ctx = build_context(quote, history)
+            ctx = build_context(quote, history, resolution=resolution, now=now)
             if not ctx:
                 continue
 
@@ -164,6 +164,8 @@ class ScannerEngine:
             return {"s": "error", "code": 422, "message": "Temporarily skipped invalid symbol"}
 
         candle_seconds = _resolution_seconds(resolution)
+        if candle_seconds is None:
+            return {"s": "error", "code": 422, "message": "Unsupported history resolution"}
         cache_key = (symbol, resolution, now // candle_seconds)
         cached = self._history_cache.get(cache_key)
         if cached is not None:
@@ -267,14 +269,6 @@ def _prefilter_quotes(
     return ranked[:max(1, limit)]
 
 
-def _resolution_seconds(resolution: str) -> int:
-    try:
-        minutes = max(1, int(resolution))
-    except (TypeError, ValueError):
-        minutes = 15
-    return minutes * 60
-
-
 def _signal_side(kind: str, ctx: ScannerRecord) -> str:
     if kind in {"GAP_DOWN_BREAK", "VWAP_REJECTION", "DEATH_CROSS"}:
         return "SELL"
@@ -296,7 +290,12 @@ def _result_row(ctx: ScannerRecord, signal: str, side: str, scored: ScannerRecor
         "t1": round(_number(scored, "t1"), 2),
         "t2": round(_number(scored, "t2"), 2),
         "confidence": _number(scored, "confidence"),
+        "scoreType": _text(scored, "scoreType"),
+        "calibrated": bool(scored.get("calibrated", False)),
+        "scoreRange": scored.get("scoreRange", [25, 95]),
+        "intendedSide": _text(scored, "intendedSide"),
         "factors": scored.get("factors", {}),
+        "breakdown": scored.get("breakdown", []),
     }
 
 

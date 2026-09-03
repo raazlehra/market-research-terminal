@@ -233,7 +233,7 @@ export function Ticket() {
           </div>
           <InfoCard label="Entry Price" value={inr(entryPrice)} />
           <InfoCard label="Current LTP" value={inr(currentLtp)} tone={mtmPercent} />
-          <InfoCard label="Confidence" value={`${params.confidence ?? 50}%`} />
+          <InfoCard label="Rule Score" value={`${params.confidence ?? 50}/100`} />
           <InfoCard label="Strategy" value={params.strategy || "Manual"} />
           <InfoCard label="Signal Time" value={signalTimeLabel} />
         </div>

@@ -177,7 +177,7 @@ export default function Stocks() {
               onChange={(e) => setSortKey(e.target.value as SortKey)}
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none"
             >
-              <option value="confidence">Confidence</option>
+              <option value="confidence">Rule Score</option>
               <option value="change">Change %</option>
               <option value="volume">Volume</option>
               <option value="symbol">Symbol</option>
@@ -188,7 +188,7 @@ export default function Stocks() {
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-4">
           <div className="flex items-center gap-3 text-xs text-slate-400">
             <SlidersHorizontal className="h-4 w-4 text-indigo-400" />
-            <span>Min confidence</span>
+            <span>Min rule score</span>
             <input
               type="range"
               min={0}
@@ -198,7 +198,7 @@ export default function Stocks() {
               onChange={(e) => setMinConfidence(Number(e.target.value))}
               className="w-36"
             />
-            <span className="font-mono text-slate-200">{minConfidence}%</span>
+            <span className="font-mono text-slate-200">{minConfidence}/100</span>
           </div>
           <button
             onClick={clearSavedResults}
@@ -290,7 +290,7 @@ export default function Stocks() {
                       <span>Volume: <b className="font-mono text-slate-200">{volumeLabel(volume)}</b></span>
                     </div>
                   </div>
-                  <div className={`text-2xl font-black ${tone.text}`}>{confidence}%</div>
+                  <div className={`text-2xl font-black ${tone.text}`} title="Rule-based confluence score; not a predicted probability of profit.">{confidence}/100</div>
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { cloneElement, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import {
   Area, Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Tooltip, XAxis, YAxis,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart2, BookmarkPlus, Search } from "lucide-react";
@@ -56,6 +56,42 @@ function SummaryItem({ label, value, detail, tone = "text-white" }: { label: str
       <div className="text-[9px] uppercase tracking-wider text-slate-500">{label}</div>
       <div className={`mt-0.5 truncate text-xs font-bold ${tone}`}>{value}</div>
       {detail && <div className="mt-0.5 truncate text-[10px] text-slate-500" title={detail}>{detail}</div>}
+    </div>
+  );
+}
+
+function MeasuredChartContainer({
+  children,
+  className,
+  containerKey,
+}: {
+  children: ReactElement<{ height?: number; width?: number }>;
+  className: string;
+  containerKey?: string;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    const update = (rect: DOMRectReadOnly) => {
+      const width = Math.floor(rect.width);
+      const height = Math.floor(rect.height);
+      setSize(width > 0 && height > 0 ? { width, height } : null);
+    };
+    update(node.getBoundingClientRect());
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0]?.contentRect;
+      if (rect) update(rect);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className={className}>
+      {size && cloneElement(children, { key: containerKey, width: size.width, height: size.height })}
     </div>
   );
 }
@@ -171,10 +207,11 @@ export default function Charts() {
   const freshness = !verified ? "No verified data" : isStale ? `Stale · ${staleSeconds}s` : liveTick ? "Live" : `Fresh · ${staleSeconds}s`;
 
   return (
-    <div className="flex h-full flex-col gap-3 p-5 animate-in fade-in duration-200">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 p-5 animate-in fade-in duration-200">
       <div className="flex flex-wrap items-center gap-2">
         <form className="flex items-center gap-1" onSubmit={(event) => { event.preventDefault(); loadSymbol(); }}>
-          <input list="chart-symbols" value={symbolSearch} onChange={(event) => setSymbolSearch(event.target.value)} placeholder={symbol} className="w-56 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500" />
+          <label htmlFor="chart-symbol-search" className="sr-only">Chart symbol</label>
+          <input id="chart-symbol-search" name="chartSymbolSearch" list="chart-symbols" value={symbolSearch} onChange={(event) => setSymbolSearch(event.target.value)} placeholder={symbol} className="w-56 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500" />
           <datalist id="chart-symbols">{chartSymbols.map((value) => <option key={value} value={value} />)}</datalist>
           <button type="submit" title="Load symbol" className="rounded-lg border border-slate-800 bg-slate-900 p-2 text-slate-300 hover:border-indigo-500"><Search className="h-3.5 w-3.5" /></button>
           <button type="button" title={verified ? "Save verified symbol" : "Load valid data before saving"} onClick={saveCurrentSymbol} disabled={!verified} className="rounded-lg border border-slate-800 bg-slate-900 p-2 text-slate-300 hover:border-indigo-500 disabled:opacity-35"><BookmarkPlus className="h-3.5 w-3.5" /></button>
@@ -197,7 +234,7 @@ export default function Charts() {
         <SummaryItem label="Visible trend" value={trend} detail={changePct === null ? "No data" : pct(changePct)} tone={changePct === null ? "text-slate-500" : changePct >= 0 ? "text-emerald-300" : "text-rose-300"} />
         <SummaryItem label="Regime" value={verified ? regimeDisplay.label : "--"} detail={verified ? regimeDisplay.action : "No verified candles"} />
         <SummaryItem label="Session range" value={sessionLow !== null && sessionHigh !== null ? `${sessionLow.toFixed(2)} – ${sessionHigh.toFixed(2)}` : "--"} />
-        <SummaryItem label="Confirmed pattern" value={verified ? candleSignal.name : "--"} detail={candleSignal.direction !== "neutral" ? `${candleSignal.score}% · completed candle` : "Completed candles only"} />
+        <SummaryItem label="Confirmed pattern" value={verified ? candleSignal.name : "--"} detail={candleSignal.direction !== "neutral" ? `${candleSignal.score}/100 · completed candle` : "Completed candles only"} />
         <SummaryItem label="Forming pattern" value={formingSignal?.name ?? "None"} detail={formingSignal ? "Provisional until candle close" : "No live forming signal"} tone="text-amber-300" />
         <SummaryItem label="LTP" value={currentPrice !== null ? inr(currentPrice) : "--"} detail={chart.sessionText} />
       </div>
@@ -212,7 +249,7 @@ export default function Charts() {
         ))}
       </div>
 
-      <div className="relative flex min-h-[500px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/20 p-3">
+      <div className="relative flex min-h-[500px] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/20 p-3">
         <div className="mb-1 flex items-center gap-2 font-mono text-[10px] text-slate-500"><BarChart2 className="h-3.5 w-3.5 text-indigo-400" />Fyers v3 · verified OHLC and volume {chart.isFallbackSession ? "· latest available session" : ""}</div>
         {(historyQuery.isLoading || historyQuery.isError || !verified) && (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-slate-950/35 px-4 text-center text-xs text-slate-400">
@@ -220,45 +257,41 @@ export default function Charts() {
           </div>
         )}
 
-        <div className="min-h-[360px] flex-1">
-          <ResponsiveContainer key={`${symbol}-${timeframe}-${chartMode}`} width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 12, right: 20, bottom: 4, left: 0 }}>
-              <defs><linearGradient id="chartPrice" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.24} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient></defs>
-              <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
-              <XAxis dataKey="time" stroke="#475569" fontSize={10} interval="preserveStartEnd" minTickGap={40} />
-              <YAxis yAxisId="price" stroke="#475569" fontSize={10} domain={chart.yDomain} width={64} />
-              <YAxis yAxisId="volume" orientation="right" hide domain={[0, "dataMax"]} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar yAxisId="volume" dataKey="volume" barSize={6} opacity={0.32}>{data.map((point) => <Cell key={`v-${point.ts}`} fill={point.close >= point.open ? "#10b981" : "#f43f5e"} />)}</Bar>
-              {chartMode === "candles" ? <Bar yAxisId="price" dataKey="candleRange" shape={<CandlestickShape />} isAnimationActive={false} /> : <Area yAxisId="price" type="monotone" dataKey="close" stroke="#6366f1" fill="url(#chartPrice)" strokeWidth={2} dot={false} />}
-              {overlays.vwap && <Line yAxisId="price" type="monotone" dataKey="vwap" stroke="#22d3ee" strokeWidth={1.2} dot={false} connectNulls />}
-              {overlays.ema20 && <Line yAxisId="price" type="monotone" dataKey="ema20" stroke="#f59e0b" strokeWidth={1.1} dot={false} connectNulls />}
-              {overlays.ema50 && <Line yAxisId="price" type="monotone" dataKey="ema50" stroke="#a78bfa" strokeWidth={1.1} dot={false} connectNulls />}
-              {overlays.previous && chart.levels.previousHigh !== null && <ReferenceLine yAxisId="price" y={chart.levels.previousHigh} stroke="#38bdf8" strokeDasharray="5 4" label={{ value: "PDH", fill: "#38bdf8", fontSize: 9 }} />}
-              {overlays.previous && chart.levels.previousLow !== null && <ReferenceLine yAxisId="price" y={chart.levels.previousLow} stroke="#38bdf8" strokeDasharray="5 4" label={{ value: "PDL", fill: "#38bdf8", fontSize: 9 }} />}
-              {overlays.session && sessionHigh !== null && <ReferenceLine yAxisId="price" y={sessionHigh} stroke="#10b981" strokeOpacity={0.55} label={{ value: "H", fill: "#10b981", fontSize: 9 }} />}
-              {overlays.session && sessionLow !== null && <ReferenceLine yAxisId="price" y={sessionLow} stroke="#f43f5e" strokeOpacity={0.55} label={{ value: "L", fill: "#f43f5e", fontSize: 9 }} />}
-              {overlays.levels && chart.levels.support !== null && <ReferenceLine yAxisId="price" y={chart.levels.support} stroke="#34d399" strokeDasharray="2 3" label={{ value: "S", fill: "#34d399", fontSize: 9 }} />}
-              {overlays.levels && chart.levels.resistance !== null && <ReferenceLine yAxisId="price" y={chart.levels.resistance} stroke="#fb7185" strokeDasharray="2 3" label={{ value: "R", fill: "#fb7185", fontSize: 9 }} />}
-              {currentPrice !== null && <ReferenceLine yAxisId="price" y={currentPrice} stroke="#818cf8" strokeDasharray="3 3" />}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+        <MeasuredChartContainer className="h-[clamp(360px,55vh,620px)] min-w-0 w-full shrink-0" containerKey={`${symbol}-${timeframe}-${chartMode}`}>
+          <ComposedChart data={data} margin={{ top: 12, right: 20, bottom: 4, left: 0 }}>
+            <defs><linearGradient id="chartPrice" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.24} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient></defs>
+            <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
+            <XAxis dataKey="time" stroke="#475569" fontSize={10} interval="preserveStartEnd" minTickGap={40} />
+            <YAxis yAxisId="price" stroke="#475569" fontSize={10} domain={chart.yDomain} width={64} />
+            <YAxis yAxisId="volume" orientation="right" hide domain={[0, "dataMax"]} />
+            <Tooltip content={<ChartTooltip />} />
+            <Bar yAxisId="volume" dataKey="volume" barSize={6} opacity={0.32}>{data.map((point) => <Cell key={`v-${point.ts}`} fill={point.close >= point.open ? "#10b981" : "#f43f5e"} />)}</Bar>
+            {chartMode === "candles" ? <Bar yAxisId="price" dataKey="candleRange" shape={<CandlestickShape />} isAnimationActive={false} /> : <Area yAxisId="price" type="monotone" dataKey="close" stroke="#6366f1" fill="url(#chartPrice)" strokeWidth={2} dot={false} />}
+            {overlays.vwap && <Line yAxisId="price" type="monotone" dataKey="vwap" stroke="#22d3ee" strokeWidth={1.2} dot={false} connectNulls />}
+            {overlays.ema20 && <Line yAxisId="price" type="monotone" dataKey="ema20" stroke="#f59e0b" strokeWidth={1.1} dot={false} connectNulls />}
+            {overlays.ema50 && <Line yAxisId="price" type="monotone" dataKey="ema50" stroke="#a78bfa" strokeWidth={1.1} dot={false} connectNulls />}
+            {overlays.previous && chart.levels.previousHigh !== null && <ReferenceLine yAxisId="price" y={chart.levels.previousHigh} stroke="#38bdf8" strokeDasharray="5 4" label={{ value: "PDH", fill: "#38bdf8", fontSize: 9 }} />}
+            {overlays.previous && chart.levels.previousLow !== null && <ReferenceLine yAxisId="price" y={chart.levels.previousLow} stroke="#38bdf8" strokeDasharray="5 4" label={{ value: "PDL", fill: "#38bdf8", fontSize: 9 }} />}
+            {overlays.session && sessionHigh !== null && <ReferenceLine yAxisId="price" y={sessionHigh} stroke="#10b981" strokeOpacity={0.55} label={{ value: "H", fill: "#10b981", fontSize: 9 }} />}
+            {overlays.session && sessionLow !== null && <ReferenceLine yAxisId="price" y={sessionLow} stroke="#f43f5e" strokeOpacity={0.55} label={{ value: "L", fill: "#f43f5e", fontSize: 9 }} />}
+            {overlays.levels && chart.levels.support !== null && <ReferenceLine yAxisId="price" y={chart.levels.support} stroke="#34d399" strokeDasharray="2 3" label={{ value: "S", fill: "#34d399", fontSize: 9 }} />}
+            {overlays.levels && chart.levels.resistance !== null && <ReferenceLine yAxisId="price" y={chart.levels.resistance} stroke="#fb7185" strokeDasharray="2 3" label={{ value: "R", fill: "#fb7185", fontSize: 9 }} />}
+            {currentPrice !== null && <ReferenceLine yAxisId="price" y={currentPrice} stroke="#818cf8" strokeDasharray="3 3" />}
+          </ComposedChart>
+        </MeasuredChartContainer>
 
         {overlays.rsi && (
-          <div className="h-28 border-t border-slate-800 pt-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 2, right: 20, bottom: 0, left: 0 }}>
-                <CartesianGrid stroke="#172033" strokeDasharray="3 3" />
-                <XAxis dataKey="time" hide />
-                <YAxis domain={[0, 100]} ticks={[30, 50, 70]} width={32} stroke="#475569" fontSize={9} />
-                <Tooltip content={<ChartTooltip />} />
-                <ReferenceLine y={70} stroke="#f43f5e" strokeDasharray="3 3" />
-                <ReferenceLine y={30} stroke="#10b981" strokeDasharray="3 3" />
-                <Line type="monotone" dataKey="rsi" stroke="#a78bfa" strokeWidth={1.4} dot={false} connectNulls />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
+          <MeasuredChartContainer className="h-28 min-w-0 w-full shrink-0 border-t border-slate-800 pt-1">
+            <ComposedChart data={data} margin={{ top: 2, right: 20, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke="#172033" strokeDasharray="3 3" />
+              <XAxis dataKey="time" hide />
+              <YAxis domain={[0, 100]} ticks={[30, 50, 70]} width={32} stroke="#475569" fontSize={9} />
+              <Tooltip content={<ChartTooltip />} />
+              <ReferenceLine y={70} stroke="#f43f5e" strokeDasharray="3 3" />
+              <ReferenceLine y={30} stroke="#10b981" strokeDasharray="3 3" />
+              <Line type="monotone" dataKey="rsi" stroke="#a78bfa" strokeWidth={1.4} dot={false} connectNulls />
+            </ComposedChart>
+          </MeasuredChartContainer>
         )}
       </div>
     </div>

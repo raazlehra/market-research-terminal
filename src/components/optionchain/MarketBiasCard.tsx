@@ -98,7 +98,7 @@ export function MarketBiasCard({
             <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase ${biasTone}`}>{bias}</span>
             <span className="text-[10px] text-slate-500">Gates <b className={candidateReady ? "text-emerald-300" : "text-amber-300"}>{gateCount}/4</b></span>
             <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${confluenceScore >= 65 ? "bg-emerald-500/15 text-emerald-300" : confluenceScore >= 50 ? "bg-amber-500/15 text-amber-300" : "bg-rose-500/15 text-rose-300"}`}>
-              CONFLUENCE {confluenceScore}%
+              CONFLUENCE {confluenceScore}/100
             </span>
           </div>
           <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${candidateReady ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
@@ -112,7 +112,7 @@ export function MarketBiasCard({
           <Metric label="Stop" value={recommendedSL ? inr(recommendedSL) : "--"} tone="bad" />
           <Metric label="Targets" value={recommendedT1 ? `${inr(recommendedT1)} / ${inr(recommendedT2)}` : "--"} tone="good" />
           <Metric label="Risk / T2" value={maxRisk ? `${inr(maxRisk)} / ${inr(targetProfit)}` : "--"} />
-          <Metric label="R:R / Confluence" value={`${rewardRisk ? `${rewardRisk.toFixed(2)}x` : "--"} / ${confluenceScore}%`} />
+          <Metric label="R:R / Score" value={`${rewardRisk ? `${rewardRisk.toFixed(2)}x` : "--"} / ${confluenceScore}/100`} />
         </div>
 
         <div className="mt-3 grid gap-x-6 border-t border-slate-800 pt-2 sm:grid-cols-3">
@@ -121,7 +121,7 @@ export function MarketBiasCard({
           <RuleRow label="Chart" value={chartRule.label} score={chartRule.score} ok={chartRule.tradeable} />
         </div>
         <div className="mt-1 text-[10px] text-slate-600">
-          Confluence factors: Flow {confluenceBreakdown.flow}% · Contract {confluenceBreakdown.contract}% · Chart {confluenceBreakdown.chart}%
+          Rule-based confluence score; not a predicted probability of profit. Flow {confluenceBreakdown.flow}/100 · Contract {confluenceBreakdown.contract}/100 · Chart {confluenceBreakdown.chart}/100
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-800 pt-2">

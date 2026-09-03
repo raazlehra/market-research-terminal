@@ -1,22 +1,7 @@
 import { calculateGreeks } from "./greeks";
-import { calculateConfidence, calculateIVPercentile } from "./confidence";
+import { calculateChainRelativeIVPercentile, calculateConfidence, type ConfidenceResult } from "./confidence";
 
-export type ConfidenceFactors = {
-  trendAlignment: number;
-  greeksFavor: number;
-  ivExtreme: number;
-  volumeCluster: number;
-  writerUnwind: number;
-  liquidity: number;
-  trendConfluence: number;
-};
-
-export type ConfidenceResult = {
-  score: number;
-  factors: ConfidenceFactors;
-  signal: string;
-  strength: "WEAK" | "MODERATE" | "STRONG" | "VERY_STRONG";
-};
+export type { ConfidenceFactors, ConfidenceResult } from "./confidence";
 
 export type CalculateRealConfidenceParams = {
   rows: any[];
@@ -36,6 +21,9 @@ export type CalculateRealConfidenceParams = {
 
 const defaultResult: ConfidenceResult = {
   score: 0,
+  scoreType: "rule_based_confluence",
+  calibrated: false,
+  scoreRange: [0, 100],
   factors: {
     trendAlignment: 0,
     greeksFavor: 0,
@@ -45,6 +33,7 @@ const defaultResult: ConfidenceResult = {
     liquidity: 0,
     trendConfluence: 0,
   },
+  scoreBreakdown: [],
   signal: "",
   strength: "WEAK",
 };
@@ -138,7 +127,7 @@ export function calculateRealConfidence(params: CalculateRealConfidenceParams): 
     theta: greeks.theta,
     currentIV: optionIV,
     avgIV,
-    ivPercentile: calculateIVPercentile(optionIV, ivHistory),
+    ivPercentile: calculateChainRelativeIVPercentile(optionIV, ivHistory),
     volume: optionData.volume ?? 0,
     oi: optionData.oi ?? 0,
     avgVolume,

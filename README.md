@@ -1,44 +1,53 @@
-# FnO Terminal — Fyers API v3 Professional Trading Hub
+# FnO Terminal - Fyers F&O Analysis and Paper-Trading Dashboard
 
-**FnO Terminal** is a professional-grade execution ecosystem tailored for high-frequency Indian equity and F&O algorithmic traders. It directly interfaces with the official **Fyers API v3 Data Streams** via a custom API proxy.
+**FnO Terminal** is a local analysis and paper-trading dashboard for Indian equity and F&O workflows. It uses a FastAPI backend proxy for read-only FYERS market data and keeps live broker mutation routes disabled.
 
 ---
 
-## 🚀 Key Milestones & Architecture Enhancements
+## Current Capabilities
 
-### 1. **Removal of Simulated Fallback Data**
+### 1. Market Data
 All randomized option chains, simulated tick streams, and procedural equity curves have been stripped from the network layer. 
 - Natively connects to the backend proxy specified in your configuration settings.
-- Natively ingests binary/JSON live WebSockets directly broadcast from Fyers v3 feeds.
-- If your custom live proxy is disconnected or down, the platform gracefully halts data pipelines and throws pure network errors. You will never be shown artificial or misleading prices.
+- Ingests FYERS quotes, option-chain data, history, and WebSocket ticks through the backend/proxy paths.
+- If the backend or FYERS data path is unavailable, the app should surface an error rather than manufacturing prices.
 
-### 2. **Institutional Stocks Selection Strategies**
-A dedicated workspace enabling one-click evaluation of 15 advanced alpha setups:
-- **Momentum & Pullback Edges**: *Breakdown Momentum*, *Pullback Buy*, *Gap Up Sustain*, *Golden Crossover*, *Inside Bar Breakout*, *Bollinger Band Squeeze*, *Supertrend Alignment*, *RSI Reversal Divergence*, *Volume Climax Exhaustion*, *Institutional VWAP Bounce*, *Open High Low (OHL)*, *Prev Day High Breakout*, *Sector Rotation Momentum*, *Harmonic Gartley Reversal*, and *Institutional Block Absorption*.
-- **Real-Time Data Integration**: Pulls underlying stock metrics directly from authentic Fyers WebSocket streams.
-- **Actionable Execution**: Maps out precise entry structures, Multi-Target bracket levels (**Target 1** and **Target 2**), custom **Stop Loss** constraints, and dynamic **Winning Chance Confluence Scores**.
+### 2. Stocks Selection Strategies
+The stock scanner currently implements five reachable strategies:
+- **VWAP Breakout**
+- **Breakout Volume**
+- **Range Breakout**
+- **EMA Trend Alignment**
+- **Volume Spike**
 
-### 3. **Advanced F&O Ticket with Multi-Bracket Exits**
-The central order execution ticket provides high-speed manual Paper Buy and Paper Sell controls:
+Scanner outputs include generated entry, stop-loss, targets, factors, and a rule-based confluence score. These scores are not calibrated probabilities of profit.
+
+### 3. Paper Ticket and Paper Positions
+The central ticket provides manual paper Buy and Sell controls:
 - **Advanced Bracket Suite**: Configure **Target 1**, **Target 2**, and a hard **Stop Loss** parameter with an **Auto-Trail SL** option.
-- **Fast Active Exits**: Execute immediate **Partial Exits (25%, 50%)** or **Full Position Unwinds** with a single button press.
+- **Paper Exits**: Paper positions can use partial exits or full position unwinds. These are local paper-trading actions, not broker orders.
 
-### 4. **Algorithmic Auto-Bot Command Center**
+### 4. Auto-Bot Command Center
 An integrated command suite embedded natively into the global navigation bar:
-- Controls live algorithmic evaluation. You can **Start/Stop** and **Pause/Resume** background signal interception.
-- Synchronize your chosen institutional selection strategy with the Auto-Bot natively. The bot continuously listens to authentic tick activity to trigger instant high-precision entries.
+- Controls dry-run and paper-auto evaluation. You can **Start/Stop** and **Pause/Resume** background signal checks.
+- Live broker order placement, modification, cancellation, position exit, and square-off-all routes are hard-disabled.
 
 ### 5. **Option Chain Writer Interception Signals**
 The Option Chain view parses live market open interest changes to deliver actionable trading cues:
 - **Writer Liquidations**: Features real-time flashing indicators when trapped options writers liquidate (**CE WRITERS EXITING** and **PE WRITERS EXITING**).
 - **Volume Confirmation**: Displays discrete alert tags when an individual option's volume massively outpaces open interest.
-- **Confluence Scoring**: Computes active **BUY CE** and **BUY PE** confidence percentages based on institutional flow and the Put-Call Ratio.
+- **Confluence Scoring**: Computes active **BUY CE** and **BUY PE** rule-based signal scores from market flow, option-contract features, OHLCV-derived indicators, liquidity checks, expiry checks, and risk gates.
+- **IV Wording**: The current implementation compares IV values within the current option chain. It is chain-relative IV rank, not historical IV rank.
+
+Rendered charts are for visualization. OHLCV-derived indicators can influence analysis, but the application does not analyze chart screenshots or rendered chart images.
+
+Historical profitability has not been established. A credible historical options backtest with expiry handling, bid/ask spread, slippage, costs, and out-of-sample validation is not implemented yet.
 
 ---
 
-## 🔑 How to Connect & Log in to Your Own Live Fyers API
+## How to Connect & Log in to Your Own FYERS Data Access
 
-To stream live data from the Indian Markets directly into the FnO Terminal, you must link it to your own official **Fyers API App**.
+To stream market data from Indian markets into FnO Terminal, link it to your own official **Fyers API App**.
 
 ### Step 1: Create Your Fyers API App
 1. Go to the [Fyers API Dashboard](https://myapi.fyers.in/) and log in with your client ID.
@@ -76,8 +85,8 @@ The React frontend requires a native Python FastAPI proxy server to securely sig
 1. On the login page, click **Continue with Fyers**.
 2. You will be securely redirected to the official Fyers OAuth portal.
 3. Authenticate with your Fyers credentials and grant access permissions.
-4. Fyers will automatically return an authorization code (`auth_code`) back to your proxy, which directly exchanges it for an official client `access_token`.
-5. The token is stored locally on your device and automatically attached as a Bearer token to all downstream API calls. The platform is now completely live!
+4. FYERS returns an authorization code (`auth_code`) back to your proxy, which exchanges it for an access token.
+5. The token is stored locally on your device and attached as a Bearer token to read-only market-data API calls. Live broker mutation endpoints remain disabled.
 
 ---
 
@@ -90,4 +99,4 @@ To compile the platform and guarantee that all custom hooks, routing matrices, a
 ```bash
 npm run build
 ```
-The output bundles are cleanly built in the `dist/` directory and are ready for production deployment.
+The output bundles are built in the `dist/` directory for local verification or later review.

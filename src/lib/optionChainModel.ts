@@ -206,6 +206,71 @@ export function buildOptionChainSnapshot(input: SnapshotInput) {
   const recommendedSL = recommendedEntryPrice ? parseFloat((recommendedEntryPrice * 0.88).toFixed(2)) : 0;
   const recommendedT1 = recommendedEntryPrice ? parseFloat((recommendedEntryPrice * 1.12).toFixed(2)) : 0;
   const recommendedT2 = recommendedEntryPrice ? parseFloat((recommendedEntryPrice * 1.25).toFixed(2)) : 0;
+  const flowPoints = recommendedOption ? Math.round(flowConfluence * 0.45) : flowConfluence;
+  const contractPoints = recommendedOption ? Math.round(candidateConfidence * 0.35) : 0;
+  const chartPoints = recommendedOption ? confluenceScore - flowPoints - contractPoints : 0;
+  const scoreBreakdown = [
+    {
+      component: "market_flow",
+      rawValue: marketScoreRaw,
+      normalizedValue: flowConfluence / 100,
+      weight: recommendedOption ? 0.45 : 1,
+      pointsContributed: flowPoints,
+      direction: bias === "Bullish" ? "bullish" : bias === "Bearish" ? "bearish" : "neutral",
+      missingData: rows.length === 0,
+      reason: "Trend, PCR, writer OI, breakout, volume, VWAP, and OHLCV analysis direction.",
+    },
+    {
+      component: "option_contract",
+      rawValue: recommendedOption ? `${recommendedOption.side}_${recommendedOption.row?.strike ?? ""}` : null,
+      normalizedValue: candidateConfidence / 100,
+      weight: recommendedOption ? 0.35 : 0,
+      pointsContributed: contractPoints,
+      direction: recommendedOption?.side === "CE" ? "bullish" : recommendedOption?.side === "PE" ? "bearish" : "neutral",
+      missingData: !recommendedOption,
+      reason: "Highest-ranked option contract rule-based score for the selected market bias.",
+    },
+    {
+      component: "chart_ohlcv",
+      rawValue: chartAnalysisScore,
+      normalizedValue: chartAnalysisScore / 100,
+      weight: recommendedOption ? 0.20 : 0,
+      pointsContributed: chartPoints,
+      direction: analysisDirection === "BULLISH" ? "bullish" : analysisDirection === "BEARISH" ? "bearish" : "neutral",
+      missingData: chartAnalysisScore <= 0,
+      reason: "Backend OHLCV market-analysis score; rendered chart image itself is not analyzed.",
+    },
+    {
+      component: "liquidity_gate",
+      rawValue: recommendedOption?.option?.oi ?? null,
+      normalizedValue: 0,
+      weight: 0,
+      pointsContributed: 0,
+      direction: "neutral",
+      missingData: !recommendedOption,
+      reason: "Liquidity is evaluated as a gate outside the confluence arithmetic.",
+    },
+    {
+      component: "expiry_gate",
+      rawValue: input.timeToExpiryYears,
+      normalizedValue: 0,
+      weight: 0,
+      pointsContributed: 0,
+      direction: "neutral",
+      missingData: !input.timeToExpiryYears,
+      reason: "Expiry risk is evaluated as a gate outside the confluence arithmetic.",
+    },
+    {
+      component: "risk_gate",
+      rawValue: recommendedEntryPrice,
+      normalizedValue: 0,
+      weight: 0,
+      pointsContributed: 0,
+      direction: "neutral",
+      missingData: !recommendedEntryPrice,
+      reason: "Stop, target, and sizing checks are evaluated after scoring.",
+    },
+  ];
 
   return {
     atmCeConfidence,
@@ -215,11 +280,15 @@ export function buildOptionChainSnapshot(input: SnapshotInput) {
     ceWriter,
     confidenceMap,
     confluenceScore,
+    scoreType: "rule_based_confluence" as const,
+    calibrated: false as const,
+    scoreRange: [0, 100] as [0, 100],
     confluenceBreakdown: {
       flow: flowConfluence,
       contract: candidateConfidence,
       chart: chartAnalysisScore,
     },
+    scoreBreakdown,
     effectiveAtm,
     ema20,
     ema50,

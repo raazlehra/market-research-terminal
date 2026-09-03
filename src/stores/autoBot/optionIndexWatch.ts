@@ -212,12 +212,12 @@ export async function runOptionIndexWatchOnce(
               bot.maxPatternConfidenceAdjustment,
               candleRule.regime.regime
             )
-          : { adjustment: 0, sample: 0, winRate: null, avgR: null, reason: "Adaptive pattern confidence disabled." };
+          : { adjustment: 0, sample: 0, winRate: null, avgR: null, reason: "Adaptive pattern score adjustment disabled." };
         const adjustedConfluence = clampConfidence(snapshot.confluenceScore + patternAdjustment.adjustment);
         const cooldown = getCooldownBlock({ symbol, side: "BUY", strategy: OPTION_WATCH_STRATEGY });
         const finalScore = adjustedConfluence + Number(recommendation.score || 0) + liquidityRule.score + expiryRule.score + chartRule.score;
         const blockers = [
-          adjustedConfluence < bot.minConfidence ? `confluence ${Math.round(adjustedConfluence)}% < ${bot.minConfidence}%` : "",
+          adjustedConfluence < bot.minConfidence ? `confluence score ${Math.round(adjustedConfluence)}/100 < ${bot.minConfidence}/100` : "",
           !liquidityRule.tradeable ? `liquidity ${liquidityRule.label}` : "",
           !expiryRule.tradeable ? `expiry ${expiryRule.label}` : "",
           !chartRule.tradeable ? `chart ${chartRule.label}` : "",

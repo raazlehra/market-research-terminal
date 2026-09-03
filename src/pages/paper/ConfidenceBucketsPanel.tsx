@@ -1,6 +1,10 @@
 import { formatWinRate } from "../../lib/paperWalletModel";
 import { inr } from "../../lib/utils";
 
+function formatPct(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? `${value.toFixed(2)}%` : "Unavailable";
+}
+
 function MetricTile({ label, value, tone }: any) {
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
@@ -29,8 +33,8 @@ export function ConfidenceBucketsPanel({
     <div className="mb-4 rounded-lg border border-slate-800 bg-slate-950/60">
       <div className="flex flex-col gap-3 border-b border-slate-800 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Confidence Buckets</h3>
-          <div className="mt-1 text-[11px] text-slate-500">Closed paper trades grouped by signal confidence.</div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Rule-Score Buckets</h3>
+          <div className="mt-1 text-[11px] text-slate-500">Closed paper trades grouped by stored rule-based signal score.</div>
         </div>
         {outcomeSummaryData.totals && (
           <div className="grid grid-cols-3 gap-2 text-right text-xs">
@@ -87,19 +91,25 @@ export function ConfidenceBucketsPanel({
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <MetricTile label="Win Rate" value={formatWinRate(selectedBucket?.winRate)} />
-              <MetricTile label="Avg Return" value={`${(selectedBucket?.avgReturn || 0).toFixed(2)}%`} />
+              <MetricTile label="Avg Net Return" value={formatPct(selectedBucket?.avgNetReturn)} />
               <MetricTile label="Profit Factor" value={(selectedBucket?.profitFactor || 0).toFixed(2)} />
             </div>
 
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <MetricTile label="Gross P&L" value={inr(selectedBucket?.grossPnl || 0)} tone={(selectedBucket?.grossPnl || 0) >= 0 ? "pos" : "neg"} />
+              <MetricTile label="Charges" value={selectedBucket?.totalCharges == null ? "Unavailable" : inr(selectedBucket.totalCharges)} tone="neg" />
+              <MetricTile label="Net P&L" value={selectedBucket?.netPnl == null ? "Unavailable" : inr(selectedBucket.netPnl)} tone={(selectedBucket?.netPnl || 0) >= 0 ? "pos" : "neg"} />
+            </div>
+
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <MetricTile label="Gross Profit" value={inr(selectedBucket?.grossProfit || 0)} tone="pos" />
-              <MetricTile label="Gross Loss" value={inr(selectedBucket?.grossLoss || 0)} tone="neg" />
+              <MetricTile label="Avg Gross Return" value={formatPct(selectedBucket?.avgGrossReturn ?? selectedBucket?.avgReturn)} />
+              <MetricTile label="Unavailable Returns" value={String(selectedBucket?.returnUnavailable || 0)} />
             </div>
           </div>
         </div>
       ) : (
         <div className="p-6 text-sm text-slate-500">
-          No outcome summary data available yet. Place a few paper trades to begin validating confidence buckets.
+          No outcome summary data available yet. Place a few paper trades to begin validating rule-score buckets.
         </div>
       )}
     </div>

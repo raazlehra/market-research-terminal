@@ -121,7 +121,7 @@ export function useOptionChainModel() {
     }
 
     if (!expiryRule.tradeable || !liquidityRule.tradeable || !chartRule.tradeable || snapshot.confluenceScore < 65) {
-      alert("This candidate is blocked by the expiry, liquidity, chart, or confidence safety checks.");
+      alert("This candidate is blocked by the expiry, liquidity, chart, or rule-score safety checks.");
       return;
     }
 

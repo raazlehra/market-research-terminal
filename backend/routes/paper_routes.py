@@ -195,7 +195,7 @@ async def paper_place(payload: dict[str, Any], d: DbSession, u: MarketUser):
                 qty=int(_number(payload.get("qty"))),
                 strategy=payload.get("strategy") or "Manual",
                 confidence=_number(payload.get("confidence")),
-                entry=_number(payload.get("entry") or result.get("fill") or tick.get("ltp")),
+                entry=_number(result.get("fill") or payload.get("entry") or tick.get("ltp")),
                 sl=_payload_float(payload, "sl"),
                 t1=_payload_float(payload, "t1"),
                 t2=_payload_float(payload, "t2"),

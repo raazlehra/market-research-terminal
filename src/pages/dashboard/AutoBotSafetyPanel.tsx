@@ -55,7 +55,7 @@ export function AutoBotSafetyPanel() {
         <StatusRow
           label="Candles"
           ok={bot.candleConfirmationMode !== "off"}
-          value={bot.candleConfirmationMode === "block_opposite" ? `BLOCK ${bot.minCandleScore}%` : bot.candleConfirmationMode.toUpperCase()}
+          value={bot.candleConfirmationMode === "block_opposite" ? `BLOCK ${bot.minCandleScore}/100` : bot.candleConfirmationMode.toUpperCase()}
         />
         <StatusRow
           label="Pattern Learning"
@@ -65,7 +65,7 @@ export function AutoBotSafetyPanel() {
         <StatusRow
           label="Regime Guard"
           ok={bot.regimeGuardEnabled}
-          value={bot.regimeGuardEnabled ? `${bot.regimeGuardMinCandleScore}%` : "OFF"}
+          value={bot.regimeGuardEnabled ? `${bot.regimeGuardMinCandleScore}/100` : "OFF"}
         />
         <StatusRow label="Kill Switch" ok={!settings.killSwitch} value={settings.killSwitch ? "ON" : "OFF"} />
         <StatusRow label="Scan Every" ok={bot.enabled && !bot.paused} value="15s" />
@@ -90,7 +90,7 @@ export function AutoBotSafetyPanel() {
               <div key={row.index} className="grid grid-cols-[92px_1fr_auto] items-center gap-2 rounded border border-slate-800/80 bg-slate-950/70 px-2 py-2">
                 <div>
                   <div className="font-bold text-slate-200">{row.label}</div>
-                  <div className="text-[10px] text-slate-500">{row.bias || "--"} {row.confluence ?? "--"}%</div>
+                  <div className="text-[10px] text-slate-500">{row.bias || "--"} {row.confluence ?? "--"}/100</div>
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-slate-300">

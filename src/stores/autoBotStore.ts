@@ -267,7 +267,7 @@ export const useAutoBot = create<AutoBotState>((set, get) => ({
   setMinCandleScore: (minCandleScore) => {
     const value = clampNumber(Number(minCandleScore), 0, 100);
     persistBotConfig({ minCandleScore: value });
-    set({ minCandleScore: value, lastAction: `Minimum candle score set to ${value}%.` });
+    set({ minCandleScore: value, lastAction: `Minimum candle score set to ${value}/100.` });
   },
   setRequireCandleVolume: (requireCandleVolume) => {
     persistBotConfig({ requireCandleVolume });
@@ -286,7 +286,7 @@ export const useAutoBot = create<AutoBotState>((set, get) => ({
   setRegimeGuardMinCandleScore: (regimeGuardMinCandleScore) => {
     const value = clampNumber(Number(regimeGuardMinCandleScore), 0, 100);
     persistBotConfig({ regimeGuardMinCandleScore: value });
-    set({ regimeGuardMinCandleScore: value, lastAction: `Regime guard candle score set to ${value}%.` });
+    set({ regimeGuardMinCandleScore: value, lastAction: `Regime guard candle score set to ${value}/100.` });
   },
   setGuardedRegimes: (guardedRegimes) => {
     const value = normalizeGuardedRegimes(guardedRegimes);
@@ -298,14 +298,14 @@ export const useAutoBot = create<AutoBotState>((set, get) => ({
     set({
       adaptivePatternConfidenceEnabled,
       lastAction: adaptivePatternConfidenceEnabled
-        ? "Adaptive pattern confidence enabled."
-        : "Adaptive pattern confidence disabled.",
+        ? "Adaptive pattern score adjustment enabled."
+        : "Adaptive pattern score adjustment disabled.",
     });
   },
   setMaxPatternConfidenceAdjustment: (maxPatternConfidenceAdjustment) => {
     const value = clampNumber(Number(maxPatternConfidenceAdjustment), 0, 15);
     persistBotConfig({ maxPatternConfidenceAdjustment: value });
-    set({ maxPatternConfidenceAdjustment: value, lastAction: `Pattern confidence cap set to ${value} points.` });
+    set({ maxPatternConfidenceAdjustment: value, lastAction: `Pattern score adjustment cap set to ${value} points.` });
   },
   setOptionSizingMode: (optionSizingMode) => {
     const value = normalizeOptionSizingMode(optionSizingMode);

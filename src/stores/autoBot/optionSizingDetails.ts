@@ -79,7 +79,7 @@ export function optionExecutionLogDetails(
 
 export function candleNote(options: OptionChainTradeOptions) {
   if (!options.candlePattern) return "";
-  const score = Number.isFinite(Number(options.candleScore)) ? `${Math.round(Number(options.candleScore))}%` : "--";
+  const score = Number.isFinite(Number(options.candleScore)) ? `${Math.round(Number(options.candleScore))}/100` : "--";
   const direction = options.candleDirection || "neutral";
   const volume = options.candleVolumeConfirmed ? "volume" : "no-volume";
   const regime = options.marketRegime ? ` Regime: ${options.marketRegime}.` : "";

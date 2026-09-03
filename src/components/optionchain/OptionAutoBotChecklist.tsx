@@ -61,7 +61,7 @@ export function OptionAutoBotChecklist({
     { label: "Market", ok: market.marketOpen, detail: market.marketOpen ? "Open" : "Closed" },
     { label: "Mode", ok: settings.tradingMode === "paper", detail: settings.tradingMode },
     { label: "Kill Switch", ok: !settings.killSwitch, detail: settings.killSwitch ? "On" : "Off" },
-    { label: "Confluence", ok: confluenceScore >= bot.minConfidence, detail: `${confluenceScore}% / ${bot.minConfidence}%` },
+    { label: "Rule Score", ok: confluenceScore >= bot.minConfidence, detail: `${confluenceScore}/100 / ${bot.minConfidence}/100` },
     { label: "Liquidity", ok: liquidityRule.tradeable, detail: liquidityRule.label },
     { label: "Expiry", ok: expiryRule.tradeable, detail: expiryRule.label },
     { label: "Chart", ok: chartRule.tradeable, detail: chartRule.label },
