@@ -56,7 +56,7 @@ def build_context(
     day_low = min(float(c[3]) for c in last20)
     avg_volume = sum(volumes[-20:]) / 20
     current_volume = volumes[-1]
-    vwap = _vwap(candles[-50:], close)
+    vwap = _vwap(_session_candles(candles), close)
     v_block = quote.get("v", {}) if isinstance(quote.get("v"), dict) else {}
     ltp = v_block.get("lp") or quote.get("ltp", 0)
     pc = v_block.get("prev_close_price") or v_block.get("prev_close") or quote.get("prev_close_price", 0)
@@ -104,6 +104,24 @@ def _vwap(candles: list[list[Any]], fallback: float) -> float:
         pv += price * vol
         tv += vol
     return pv / tv if tv else fallback
+
+
+def _session_candles(candles: list[list[Any]]) -> list[list[Any]]:
+    if not candles:
+        return []
+    try:
+        last_date = datetime.fromtimestamp(_normalize_timestamp(candles[-1][0]), _IST).date()
+    except (TypeError, ValueError, IndexError):
+        return candles[-50:]
+    session_rows = []
+    for candle in candles:
+        try:
+            candle_date = datetime.fromtimestamp(_normalize_timestamp(candle[0]), _IST).date()
+        except (TypeError, ValueError, IndexError):
+            continue
+        if candle_date == last_date:
+            session_rows.append(candle)
+    return session_rows or candles[-50:]
 
 
 def _completed_candles(raw: Any, resolution: str = "15", now: int | None = None) -> list[list[float]]:

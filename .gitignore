@@ -19,6 +19,8 @@ temp_delete_*.txt
 tmp/
 temp/
 .cache/
+backtest-results/
+backend/backtesting/results/
 
 # Build output and dependencies
 node_modules/
