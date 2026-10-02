@@ -1,7 +1,7 @@
 import httpx
 from typing import Any
 
-from .common import API_BASE
+from .common import ACCOUNT_API
 
 
 class FyersAccountMixin:
@@ -13,12 +13,17 @@ class FyersAccountMixin:
 
     async def profile(self) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=10) as c:
-            r = await c.get(f"{API_BASE}/profile", headers=self._headers())
-            return r.json().get("data", {})
+            r = await c.get(f"{ACCOUNT_API}/profile", headers=self._headers())
+        if r.status_code == 401:
+            raise RuntimeError("AUTH_EXPIRED")
+        if r.status_code != 200:
+            raise RuntimeError(f"FYERS profile request failed ({r.status_code})")
+        payload = r.json()
+        return payload.get("data", {}) if isinstance(payload, dict) else {}
 
     async def funds(self) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=10) as c:
-            r = await c.get(f"{API_BASE}/funds", headers=self._headers())
+            r = await c.get(f"{ACCOUNT_API}/funds", headers=self._headers())
 
             if r.status_code == 401:
                 raise RuntimeError("AUTH_EXPIRED")
@@ -44,8 +49,13 @@ class FyersAccountMixin:
 
     async def holdings(self) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=10) as c:
-            r = await c.get(f"{API_BASE}/holdings", headers=self._headers())
-            return r.json().get("data", {"holdings": []})
+            r = await c.get(f"{ACCOUNT_API}/holdings", headers=self._headers())
+        if r.status_code == 401:
+            raise RuntimeError("AUTH_EXPIRED")
+        if r.status_code != 200:
+            raise RuntimeError(f"FYERS holdings request failed ({r.status_code})")
+        payload = r.json()
+        return payload.get("data", {"holdings": []}) if isinstance(payload, dict) else {"holdings": []}
 
     async def dashboard(self) -> dict[str, Any]:
         positions = await self.positions()

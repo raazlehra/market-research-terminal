@@ -16,6 +16,7 @@ from .routes.journal_routes import router as journal_router
 from .routes.watchlist_routes import router as watchlist_router
 from .routes.alert_routes import router as alert_router
 from .routes.scanner_strategy_routes import router as scanner_strategy_router
+from .routes.analysis_routes import router as analysis_router
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("fno-backend")
@@ -61,3 +62,4 @@ app.include_router(watchlist_router)
 app.include_router(alert_router)
 app.include_router(scanner_strategy_router)
 app.include_router(misc_router)
+app.include_router(analysis_router)

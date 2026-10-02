@@ -1,0 +1,14 @@
+import { ArrowRight, Bitcoin, Layers, ShieldCheck, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const AREAS = [
+  { to: "/stocks", title: "Stocks", text: "FYERS equity quotes, historical candles, deterministic indicators, and bull/bear analysis.", icon: TrendingUp, tone: "text-emerald-300" },
+  { to: "/fno", title: "F&O", text: "Expiry-aware option chain, OI/PCR concentrations, underlying trend, and risk review.", icon: Layers, tone: "text-indigo-300" },
+  { to: "/crypto", title: "Crypto", text: "Independent public crypto market data, OHLCV charts, indicators, and crypto-specific analysis.", icon: Bitcoin, tone: "text-amber-300" },
+];
+
+export default function ResearchDashboard() {
+  return <div className="space-y-6 p-5"><div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-indigo-500/5 p-6"><div className="flex items-center gap-2 text-emerald-200"><ShieldCheck className="h-5 w-5" /><span className="text-xs font-black uppercase tracking-[0.18em]">Permanent read-only mode</span></div><h1 className="mt-4 text-3xl font-black text-white">Market research, without execution risk.</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">Quotes and charts refresh independently. Multi-agent analysis runs only when requested, explains bullish and bearish evidence, labels stale or unavailable sources, and cannot call a broker or exchange order API.</p><div className="mt-4 rounded-lg border border-slate-700 bg-slate-950/40 px-3 py-2 font-mono text-xs text-slate-300">execution_enabled: false · signal_type: analysis_only</div></div><div className="grid gap-4 lg:grid-cols-3">{AREAS.map(({ to, title, text, icon: Icon, tone }) => <Link key={to} to={to} className="group rounded-2xl border border-slate-800 bg-slate-900/45 p-5 transition hover:-translate-y-0.5 hover:border-slate-600"><Icon className={`h-6 w-6 ${tone}`} /><h2 className="mt-4 text-lg font-bold text-white">{title}</h2><p className="mt-2 min-h-16 text-sm leading-6 text-slate-400">{text}</p><div className="mt-5 flex items-center gap-2 text-xs font-bold text-indigo-300">Open research area <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></div></Link>)}</div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Status label="Market refresh" value="Independent" /><Status label="Analysis trigger" value="Explicit only" /><Status label="Analysis cache" value="5 minutes / snapshot" /><Status label="Order execution" value="Unavailable" /></div></div>;
+}
+
+function Status({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-slate-800 bg-slate-950/35 p-4"><div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div><div className="mt-1 text-sm font-bold text-white">{value}</div></div>; }

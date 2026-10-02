@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { AnalysisPanel } from "../components/AnalysisPanel";
+import { FuturesSnapshotPanel } from "../components/FuturesSnapshotPanel";
 import { OptionFilters } from "../components/optionchain/OptionFilters";
 import { OptionHeader } from "../components/optionchain/OptionHeader";
 import { OptionTable } from "../components/optionchain/OptionTable";
@@ -8,6 +11,7 @@ import type { OptionChainResponse } from "../lib/api";
 
 export default function OptionChain() {
   const model = useOptionChainModel();
+  const [analysisHorizon, setAnalysisHorizon] = useState("Intraday");
   const chainData = (model.chain.data ?? {}) as Partial<OptionChainResponse>;
   const chainError = model.chain.error instanceof Error ? model.chain.error.message : "";
   const chainStatus = model.chain.isError
@@ -63,14 +67,6 @@ export default function OptionChain() {
         expiryRule={model.expiryRule}
         liquidityRule={model.liquidityRule}
         chartRule={model.chartRule}
-        lotSize={model.lotSize}
-        lots={model.paperLots}
-        onLotsChange={model.setPaperLots}
-        onBuyCE={() => model.openRecommendedTicket("CE", model.recommendedCall)}
-        onBuyPE={() => model.openRecommendedTicket("PE", model.recommendedPut)}
-        autoBotLastAction={model.autoBotMessage}
-        autoBotBusy={model.autoBotBusy}
-        onAutoBotTrade={model.triggerAutoBotOption}
       />
 
       <OptionFilters
@@ -99,13 +95,23 @@ export default function OptionChain() {
       <OptionTable
         rows={model.rows}
         effectiveAtm={model.effectiveAtm}
-        lotSize={model.lotSize}
         radius={model.radius}
         minOI={model.minOI}
         selectedRow={model.selectedRow}
         setSelectedRow={model.setSelectedRow}
         confidenceMap={model.confidenceMap}
         marketStructureOverall={model.marketStructureOverall}
+      />
+
+      <FuturesSnapshotPanel symbol={model.index} />
+
+      <AnalysisPanel
+        assetType="fno"
+        symbol={model.index}
+        expiry={model.expiry}
+        horizons={["Intraday", "Short-term / expiry-aware"]}
+        horizon={analysisHorizon}
+        onHorizonChange={setAnalysisHorizon}
       />
     </div>
   );

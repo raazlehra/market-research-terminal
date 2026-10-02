@@ -1,0 +1,3 @@
+# Optional explicit-click AI research only. Not required for normal dashboards.
+# TradingAgents v0.5.2 tag commit, pinned to an immutable Git commit.
+tradingagents @ git+https://github.com/TauricResearch/TradingAgents.git@5eb50854dad299381861632aa34014448b4260fc

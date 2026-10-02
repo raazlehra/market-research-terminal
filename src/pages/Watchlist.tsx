@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useWatchlist, useTicket, useMarket } from "../stores";
+import { useWatchlist, useMarket } from "../stores";
 import { socket } from "../lib/api";
 import { inr, pct, signColor } from "../lib/utils";
-import { Plus, X, ShoppingCart } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 const PRESET_SYMBOLS = [
   "NSE:NIFTY50-INDEX", "NSE:NIFTYBANK-INDEX", "NSE:FINNIFTY-INDEX", "NSE:MIDCPNIFTY-INDEX",
@@ -14,7 +14,6 @@ export default function Watchlist() {
   const { symbols, add, remove } = useWatchlist();
   const [input, setInput] = useState("");
   const ticks = useMarket((s) => s.ticks);
-  const openTicket = useTicket((s) => s.openFor);
 
   useEffect(() => {
     socket.subscribe(symbols);
@@ -60,7 +59,7 @@ export default function Watchlist() {
               <th className="text-right">Ask</th>
               <th className="text-right">OI</th>
               <th className="text-right">Volume</th>
-              <th className="text-right">Actions</th>
+              <th className="text-right">Manage</th>
             </tr>
           </thead>
           <tbody>
@@ -80,10 +79,7 @@ export default function Watchlist() {
                   <td className="text-right font-mono text-slate-400">{t?.oi ?? "—"}</td>
                   <td className="text-right font-mono text-slate-400">{t?.volume ?? "—"}</td>
                   <td className="text-right">
-                    <button onClick={() => openTicket({ symbol: s, side: "BUY", orderType: "MARKET" })} className="mr-2 text-emerald-400 hover:text-emerald-300">
-                      <ShoppingCart className="inline h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => remove(s)} className="text-rose-400 hover:text-rose-300">
+                    <button onClick={() => remove(s)} title="Remove from watchlist" className="text-rose-400 hover:text-rose-300">
                       <X className="inline h-3.5 w-3.5" />
                     </button>
                   </td>

@@ -1,4 +1,4 @@
-import type { ExchangeResponse, ExpiryRecord, LoginResponse, OptionChainResponse } from "./types";
+import type { AnalysisConfig, AnalysisRequest, AnalysisResult, CryptoMarketSnapshot, ExchangeResponse, ExpiryRecord, FuturesMarketSnapshot, LoginResponse, OptionChainResponse } from "./types";
 import type { BotDecisionLog } from "../../stores/autoBot/types";
 import { paperResetRequest } from "./paperClient";
 import { DEFAULT_API_BASE_URL } from "./config";
@@ -53,17 +53,14 @@ export class ApiClient {
     return await res.json();
   }
 
-  async exchangeCode(code: string): Promise<ExchangeResponse> {
-    const res = await fetch(`${this.getBaseUrl()}/api/auth/exchange`, {
+  async completeLogin(handoff: string): Promise<ExchangeResponse> {
+    const res = await fetch(`${this.getBaseUrl()}/api/auth/complete`, {
       method: "POST",
       headers: this.getHeaders(),
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ handoff }),
       signal: AbortSignal.timeout(30000),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Failed to exchange Fyers auth_code for access_token.");
-    }
+    if (!res.ok) throw new Error(await this.readError(res, "Failed to complete FYERS login."));
     return await res.json();
   }
 
@@ -116,6 +113,52 @@ export class ApiClient {
     }
     return await res.json();
   }
+
+  async getFuturesMarket(symbol: string, contractSymbol?: string): Promise<FuturesMarketSnapshot> {
+    const url = new URL(`${this.getBaseUrl()}/api/futures/market`);
+    url.searchParams.set("symbol", symbol);
+    if (contractSymbol) url.searchParams.set("contract_symbol", contractSymbol);
+    const res = await fetch(url.toString(), {
+      headers: this.getHeaders(), cache: "no-store", signal: AbortSignal.timeout(45000),
+    });
+    if (!res.ok) throw new Error(await this.readError(res, "Failed to fetch FYERS futures market data."));
+    return await res.json();
+  }
+
+  async getAnalysisConfig(): Promise<AnalysisConfig> {
+    const res = await fetch(`${this.getBaseUrl()}/api/analysis/config`, {
+      headers: this.getHeaders(), cache: "no-store", signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) throw new Error(await this.readError(res, "Failed to read AI analysis configuration."));
+    return await res.json();
+  }
+
+  async getCryptoMarket(symbol: string, interval: string): Promise<CryptoMarketSnapshot> {
+    const url = new URL(`${this.getBaseUrl()}/api/crypto/market`);
+    url.searchParams.set("symbol", symbol);
+    url.searchParams.set("interval", interval);
+    const res = await fetch(url.toString(), {
+      headers: this.getHeaders(), cache: "no-store", signal: AbortSignal.timeout(30000),
+    });
+    if (!res.ok) throw new Error(await this.readError(res, "Failed to fetch crypto market data."));
+    return await res.json();
+  }
+
+  async runAnalysis(payload: AnalysisRequest): Promise<AnalysisResult> {
+    const res = await fetch(`${this.getBaseUrl()}/api/analysis/run`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (!res.ok) throw new Error(await this.readError(res, "Analysis failed."));
+    const result = await res.json() as AnalysisResult;
+    if (result.execution_enabled !== false || result.signal_type !== "analysis_only") {
+      throw new Error("Unsafe analysis response was rejected.");
+    }
+    return result;
+  }
+
 
   async placePaperOrder(payload: any) {
     const res = await fetch(`${this.getBaseUrl()}/api/paper/place`, {
@@ -346,53 +389,6 @@ export class ApiClient {
 
   async squareOffAll() {
     return this.liveTradingDisabled();
-  }
-
-  // Trading workflow - Position tracking
-  async createPosition(payload: any) {
-    const res = await fetch(`${this.getBaseUrl()}/api/positions/create`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(`Position creation failed: ${res.statusText}`);
-    return res.json();
-  }
-
-  async getOpenPositions() {
-    const res = await fetch(`${this.getBaseUrl()}/api/positions/open`, {
-      headers: this.getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to fetch positions');
-    return res.json();
-  }
-
-  async getPositionDetails(positionId: string) {
-    const res = await fetch(`${this.getBaseUrl()}/api/positions/${positionId}`, {
-      headers: this.getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to fetch position details');
-    return res.json();
-  }
-
-  async updatePosition(positionId: string, payload: any) {
-    const res = await fetch(`${this.getBaseUrl()}/api/positions/${positionId}`, {
-      method: 'PUT',
-      headers: this.getHeaders(),
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to update position');
-    return res.json();
-  }
-
-  async closePosition(positionId: string, exitPrice: number) {
-    const res = await fetch(`${this.getBaseUrl()}/api/positions/${positionId}/close`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({ exitPrice }),
-    });
-    if (!res.ok) throw new Error('Failed to close position');
-    return res.json();
   }
 
   // Trading workflow - Trade journal

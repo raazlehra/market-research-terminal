@@ -2,7 +2,6 @@ import { inr } from "../../lib/utils";
 import type { ChartRuleResult } from "../../lib/chartRules";
 import type { ExpiryRuleResult } from "../../lib/expiryRules";
 import type { OptionLiquidityResult } from "../../lib/liquidityRules";
-import { OptionAutoBotChecklist } from "./OptionAutoBotChecklist";
 
 type MarketBiasCardProps = {
   bias: string;
@@ -16,14 +15,6 @@ type MarketBiasCardProps = {
   expiryRule: ExpiryRuleResult;
   liquidityRule: OptionLiquidityResult;
   chartRule: ChartRuleResult;
-  lotSize: number;
-  lots: number;
-  onLotsChange: (lots: number) => void;
-  onBuyCE: () => void;
-  onBuyPE: () => void;
-  autoBotLastAction?: string;
-  autoBotBusy?: boolean;
-  onAutoBotTrade: () => void;
 };
 
 function Metric({ label, value, tone = "normal" }: { label: string; value: string; tone?: "normal" | "good" | "bad" }) {
@@ -57,21 +48,12 @@ export function MarketBiasCard({
   expiryRule,
   liquidityRule,
   chartRule,
-  lotSize,
-  lots,
-  onLotsChange,
-  onBuyCE,
-  onBuyPE,
-  autoBotLastAction,
-  autoBotBusy,
-  onAutoBotTrade,
 }: MarketBiasCardProps) {
-  const qty = lotSize * lots;
   const maxRisk = recommendedEntryPrice && recommendedSL
-    ? Math.max(0, (recommendedEntryPrice - recommendedSL) * qty)
+    ? Math.max(0, recommendedEntryPrice - recommendedSL)
     : 0;
   const targetProfit = recommendedEntryPrice && recommendedT2
-    ? Math.max(0, (recommendedT2 - recommendedEntryPrice) * qty)
+    ? Math.max(0, recommendedT2 - recommendedEntryPrice)
     : 0;
   const rewardRisk = maxRisk > 0 ? targetProfit / maxRisk : 0;
   const optionSide = recommendedOption?.side || "--";
@@ -102,7 +84,7 @@ export function MarketBiasCard({
             </span>
           </div>
           <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${candidateReady ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
-            {candidateReady ? "READY TO REVIEW" : recommendedOption ? "FILTERED" : "NO SETUP"}
+            {candidateReady ? "ANALYTICAL SETUP" : recommendedOption ? "FILTERED" : "NO SETUP"}
           </span>
         </div>
 
@@ -111,7 +93,7 @@ export function MarketBiasCard({
           <Metric label="Entry" value={recommendedEntryPrice ? inr(recommendedEntryPrice) : "--"} />
           <Metric label="Stop" value={recommendedSL ? inr(recommendedSL) : "--"} tone="bad" />
           <Metric label="Targets" value={recommendedT1 ? `${inr(recommendedT1)} / ${inr(recommendedT2)}` : "--"} tone="good" />
-          <Metric label="Risk / T2" value={maxRisk ? `${inr(maxRisk)} / ${inr(targetProfit)}` : "--"} />
+          <Metric label="Risk / T2 (unit)" value={maxRisk ? `${inr(maxRisk)} / ${inr(targetProfit)}` : "--"} />
           <Metric label="R:R / Score" value={`${rewardRisk ? `${rewardRisk.toFixed(2)}x` : "--"} / ${confluenceScore}/100`} />
         </div>
 
@@ -124,36 +106,9 @@ export function MarketBiasCard({
           Rule-based confluence score; not a predicted probability of profit. Flow {confluenceBreakdown.flow}/100 · Contract {confluenceBreakdown.contract}/100 · Chart {confluenceBreakdown.chart}/100
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-800 pt-2">
-          <label className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-slate-500">
-            Lots
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={lots}
-              onChange={(event) => onLotsChange(Math.min(20, Math.max(1, Number(event.target.value) || 1)))}
-              className="w-14 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-center text-xs font-semibold text-white outline-none"
-            />
-            <span className="normal-case tracking-normal">Qty {qty}</span>
-          </label>
-          <div className="ml-auto flex flex-wrap gap-1.5">
-            <button type="button" onClick={onBuyCE} disabled={!candidateReady || optionSide !== "CE"} className="rounded bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-30">Review CE</button>
-            <button type="button" onClick={onBuyPE} disabled={!candidateReady || optionSide !== "PE"} className="rounded bg-rose-500/15 px-3 py-1.5 text-[11px] font-semibold text-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Review PE</button>
-            <button type="button" onClick={onAutoBotTrade} disabled={!candidateReady || autoBotBusy} className="rounded bg-indigo-500/15 px-3 py-1.5 text-[11px] font-semibold text-indigo-200 hover:bg-indigo-500/25 disabled:cursor-not-allowed disabled:opacity-30">{autoBotBusy ? "Checking..." : "Test Auto-Bot"}</button>
-          </div>
-        </div>
-        {autoBotLastAction && <div className="mt-2 truncate text-[10px] text-slate-500" title={autoBotLastAction}>Auto-Bot: {autoBotLastAction}</div>}
+        <div className="mt-2 border-t border-slate-800 pt-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">View only · contract analytics cannot open or stage an order</div>
       </section>
 
-      <OptionAutoBotChecklist
-        bias={bias}
-        confluenceScore={confluenceScore}
-        recommendedOption={recommendedOption}
-        expiryRule={expiryRule}
-        liquidityRule={liquidityRule}
-        chartRule={chartRule}
-      />
     </div>
   );
 }

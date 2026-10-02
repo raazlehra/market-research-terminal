@@ -1,10 +1,8 @@
-import asyncio
 import time
 from datetime import datetime, timezone
 from typing import Any
 
 import httpx
-from fyers_apiv3 import fyersModel
 
 from .common import API_BASE, DATA_API
 from .symbols import normalize_symbol, normalize_symbols
@@ -106,8 +104,7 @@ class FyersMarketDataMixin:
         )
 
         if r.status_code != 200:
-            print("QUOTE ERROR =", r.text)
-            return {"d": []}
+            return {"s": "error", "code": r.status_code, "message": "FYERS quote request failed", "d": []}
 
         return r.json()
     def quotes_sync(self, symbols: list[str]) -> dict[str, Any]:
@@ -122,14 +119,23 @@ class FyersMarketDataMixin:
             )
 
             if r.status_code != 200:
-                print("QUOTE ERROR =", r.text)
-                return {"d": []}
+                return {"s": "error", "code": r.status_code, "message": "FYERS quote request failed", "d": []}
 
             return r.json()
     async def depth(self, symbol: str) -> dict[str, Any]:
-        async with self.http as c:
-            r = await c.post(f"{DATA_API}/depth/", json={"symbol": symbol, "ohlcv_flag": 1}, headers=self._headers())
+        r = await self.http.get(
+            f"{DATA_API}/depth",
+            params={"symbol": normalize_symbol(symbol), "ohlcv_flag": 1},
+            headers=self._headers(),
+        )
+        if r.status_code == 401:
+            raise RuntimeError("AUTH_EXPIRED")
+        if r.status_code != 200:
+            return {"s": "error", "code": r.status_code, "message": "FYERS depth request failed"}
+        try:
             return r.json()
+        except ValueError:
+            return {"s": "error", "code": r.status_code, "message": "FYERS depth response was not JSON"}
     async def history(self, symbol: str, resolution: str, frm: int, to: int) -> dict[str, Any]:
         symbol = normalize_symbol(symbol)
 
@@ -151,15 +157,13 @@ class FyersMarketDataMixin:
             return {
                 "s": "error",
                 "code": r.status_code,
-                "message": r.text
+                "message": "FYERS history request failed"
             }
 
         return r.json()
     async def option_chain(self, symbol: str, expiry: str | None = None) -> dict[str, Any]:
         if not self.app_id or not self.token:
             return _empty_option_chain(symbol, expiry, "Fyers option-chain requires login.")
-        app_id = self.app_id
-        token = self.token
         meta = _option_meta(symbol)
         symbol = meta["symbol"]
         step = meta["step"]
@@ -169,43 +173,36 @@ class FyersMarketDataMixin:
         if cached and time.monotonic() - cached[0] < _OPTION_CHAIN_CACHE_TTL_SECONDS:
             return cached[1]
 
-        def _fetch():
-            fy = fyersModel.FyersModel(
-                client_id=app_id,
-                token=token,
-                log_path=""
-            )
+        payload = {
+            "symbol": symbol,
+            "strikecount": 20,
+            "timestamp": expiry_timestamp,
+        }
+        response = await self.http.get(
+            f"{DATA_API}/options-chain-v3",
+            params=payload,
+            headers=self._headers(),
+        )
+        if response.status_code != 200:
+            return _empty_option_chain(symbol, expiry_timestamp, f"Fyers option-chain request failed ({response.status_code}).")
 
-            payload = {
-                "symbol": symbol,
-                "strikecount": 20,
-                "timestamp": expiry_timestamp
-            }
-
-            return fy.optionchain(data=payload)
-
-        raw = await asyncio.to_thread(_fetch)
+        raw = response.json()
 
         if not raw:
-            print("OPTIONCHAIN RETURNED NONE")
             return _empty_option_chain(symbol, expiry_timestamp, "Fyers returned no option-chain data.")
 
         if not isinstance(raw, dict):
-            print("INVALID OPTION RESPONSE:", raw)
             return _empty_option_chain(symbol, expiry_timestamp, "Invalid Fyers option-chain response.")
 
         if raw.get("s") != "ok":
-            print("OPTIONCHAIN ERROR =", raw)
             return _empty_option_chain(symbol, expiry_timestamp, str(raw.get("message") or "Fyers option-chain request failed."))
 
         data = raw.get("data", {})
         if not isinstance(data, dict):
-            print("INVALID OPTION DATA:", raw)
             return _empty_option_chain(symbol, expiry_timestamp, "Fyers option-chain data was not an object.")
 
         chain = data.get("optionsChain") or data.get("options_chain") or []
         if not isinstance(chain, list):
-            print("INVALID OPTION CHAIN:", raw)
             return _empty_option_chain(symbol, expiry_timestamp, "Fyers option-chain rows were not a list.")
 
         spot = _first_number(data, ["spotPrice", "spot_price", "underlyingValue", "underlying_value", "spot", "ltp"], 0)
@@ -238,7 +235,7 @@ class FyersMarketDataMixin:
                 "oi": _to_int(item.get("oi", item.get("open_interest"))),
                 "oi_change": _to_int(item.get("oich", item.get("oi_change", item.get("oiChange")))),
                 "volume": _to_int(item.get("volume", item.get("vol_traded_today"))),
-                "iv": _to_float(item.get("iv", item.get("implied_volatility"))),
+                "iv": _to_float(item.get("iv", item.get("implied_volatility")), None),
                 "ltp": _to_float(item.get("ltp", item.get("last_price"))),
                 "bid": _to_float(item.get("bid", item.get("bid_price"))),
                 "ask": _to_float(item.get("ask", item.get("ask_price"))),
@@ -268,8 +265,8 @@ class FyersMarketDataMixin:
         analysis: dict[str, Any] = {}
         try:
             analysis = await get_market_analysis(self.history, symbol) if spot else {}
-        except Exception as error:
-            print("MARKET ANALYSIS ERROR:", error)
+        except Exception:
+            analysis = {}
         analysis_timeframes = analysis.get("timeframes", {}) if isinstance(analysis, dict) else {}
         analysis_5 = analysis_timeframes.get("5", {})
         analysis_15 = analysis_timeframes.get("15", {})

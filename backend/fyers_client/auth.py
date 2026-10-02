@@ -1,7 +1,8 @@
 from urllib.parse import urlencode
 from typing import Any
 
-from fyers_apiv3 import fyersModel
+from .common import ACCOUNT_API
+
 
 
 class FyersAuthMixin:
@@ -15,33 +16,20 @@ class FyersAuthMixin:
         self.token = token
         self.ready = bool(token)
 
-        try:
-            app_id = self.app_id or ""
-            fy = fyersModel.FyersModel(
-                client_id=app_id,
-                token=self.token,
-                log_path=""
-            )
-
-            profile = fy.get_profile()
-
-            if profile.get("s") == "error":
-                print("FYERS LOGIN REQUIRED")
-
-        except Exception:
-            print("FYERS LOGIN CHECK FAILED")
     def _headers(self) -> dict[str, str]:
         return {
             "Authorization": f"{self.app_id}:{self.token}",
             "Content-Type": "application/json"
         }
 
-    def login_url(self) -> str:
+    def login_url(self, state: str) -> str:
+        if not state:
+            raise ValueError("OAuth state is required")
         params = {
             "client_id": self.app_id,
             "redirect_uri": self.redirect_uri,
             "response_type": "code",
-            "state": "fno",
+            "state": state,
         }
 
         return (
@@ -52,38 +40,32 @@ class FyersAuthMixin:
     async def exchange_code(self, code: str) -> tuple[str, dict[str, Any]]:
         if not self.app_id or not self.secret:
             raise RuntimeError("FYERS_APP_ID or FYERS_SECRET missing")
-        app_id = self.app_id
-        secret = self.secret
-
-        session = fyersModel.SessionModel(
-            client_id=app_id,
-            secret_key=secret,
-            redirect_uri=self.redirect_uri,
-            response_type="code",
-            grant_type="authorization_code"
+        response = await self.http.post(
+            f"{ACCOUNT_API}/validate-authcode",
+            json={
+                "grant_type": "authorization_code",
+                "appIdHash": self._app_hash(),
+                "code": code,
+            },
         )
+        payload = response.json()
+        access_token = payload.get("access_token") if isinstance(payload, dict) else None
 
-        session.set_token(code)
-
-        response = session.generate_token()
-
-        access_token = response.get("access_token")
-
-        if not access_token:
-            raise RuntimeError(str(response))
+        if response.status_code != 200 or not access_token:
+            raise RuntimeError("FYERS authorization failed")
 
         self.set_token(access_token)
 
-        fy = fyersModel.FyersModel(
-            client_id=app_id,
-            token=access_token,
-            is_async=False,
-            log_path=""
+        profile_response = await self.http.get(
+            f"{ACCOUNT_API}/profile",
+            headers=self._headers(),
         )
+        if profile_response.status_code != 200:
+            raise RuntimeError("FYERS profile validation failed")
+        profile_payload = profile_response.json()
+        profile = profile_payload.get("data", {}) if isinstance(profile_payload, dict) else {}
+        return access_token, profile
 
-        profile = fy.get_profile()
-
-        return access_token, profile.get("data", {})
     def _app_hash(self) -> str:
         import hashlib
 

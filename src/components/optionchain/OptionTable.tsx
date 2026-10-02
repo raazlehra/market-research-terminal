@@ -7,7 +7,6 @@ const GRID_TEMPLATE = "8fr 8fr 9fr 6fr 13fr 13fr 13fr 9fr 13fr 13fr 13fr 6fr 9fr
 type OptionTableProps = {
   rows: any[];
   effectiveAtm: number | null;
-  lotSize: number;
   radius: number;
   minOI: number;
   selectedRow: any | null;
@@ -19,7 +18,6 @@ type OptionTableProps = {
 export function OptionTable({
   rows,
   effectiveAtm,
-  lotSize,
   radius,
   minOI,
   selectedRow,
@@ -105,10 +103,8 @@ export function OptionTable({
                 {/* PE LegCells (7 columns) */}
                 <LegCell
                   r={row.pe}
-                  lotSize={lotSize}
                   side="PE"
                   isItm={row.pe?.itm ?? false}
-                  symbol={row.pe?.symbol || ""}
                 />
 
                 {/* Strike (1 column, no duplicate) */}
@@ -121,10 +117,8 @@ export function OptionTable({
                 {/* CE LegCells (7 columns) */}
                 <LegCell
                   r={row.ce}
-                  lotSize={lotSize}
                   side="CE"
                   isItm={row.ce?.itm ?? false}
-                  symbol={row.ce?.symbol || ""}
                 />
               </div>
             );

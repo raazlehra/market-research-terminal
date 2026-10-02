@@ -3,12 +3,14 @@ import { Plus, RefreshCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useScanner } from "../hooks";
 import { SCANNERS } from "../lib/scanners";
 import { inr, pct } from "../lib/utils";
-import { useTicket, useWatchlist } from "../stores";
+import { useWatchlist } from "../stores";
+import { AnalysisPanel } from "../components/AnalysisPanel";
 
-import { DEFAULT_STRATEGY, FACTORS, TIMEFRAMES, confidenceTone, numberValue, readSavedSnapshot, storageKey, validTradeLevels, volumeLabel, type ScannerResponse, type ScannerResult, type SideFilter, type SortKey } from "./stocks/helpers";
+import { DEFAULT_STRATEGY, FACTORS, TIMEFRAMES, confidenceTone, numberValue, readSavedSnapshot, storageKey, volumeLabel, type ScannerResponse, type ScannerResult, type SideFilter, type SortKey } from "./stocks/helpers";
 export default function Stocks() {
-  const openTicket = useTicket((s) => s.openFor);
   const addWatchlist = useWatchlist((s) => s.add);
+  const [researchSymbol, setResearchSymbol] = useState("NSE:RELIANCE-EQ");
+  const [analysisHorizon, setAnalysisHorizon] = useState("Swing");
 
   const [universe, setUniverse] = useState(() => localStorage.getItem("stocks_universe") || "FNO");
   const [strategy, setStrategy] = useState(() => {
@@ -108,7 +110,7 @@ export default function Stocks() {
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight">Stocks Selection</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Scan the selected universe for actionable equity setups, then stage trades into the ticket.
+            Scan verified equity data and inspect analysis-only signals with an explicit horizon.
           </p>
         </div>
         <button
@@ -120,6 +122,25 @@ export default function Stocks() {
           {scan.isLoading ? "Scanning" : "Run Scan"}
         </button>
       </div>
+
+      <div className="rounded-2xl border border-emerald-500/20 bg-slate-900/40 p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex-1 text-xs text-slate-400">Selected stock for research
+            <input value={researchSymbol} onChange={(event) => setResearchSymbol(event.target.value.toUpperCase())} placeholder="NSE:RELIANCE-EQ" className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+          </label>
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/8 px-3 py-2 text-xs font-bold text-emerald-200">VIEW ONLY · analysis signals are not orders</div>
+        </div>
+      </div>
+
+      <AnalysisPanel
+        assetType="equity"
+        symbol={researchSymbol}
+        resolution="D"
+        horizons={["Intraday", "Swing", "Positional"]}
+        horizon={analysisHorizon}
+        onHorizonChange={setAnalysisHorizon}
+      />
+
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -271,7 +292,6 @@ export default function Stocks() {
             const confidence = numberValue(stock.confidence);
             const tone = confidenceTone(confidence);
             const volume = numberValue(stock.volume);
-            const levelsValid = validTradeLevels(stock);
 
             return (
               <div key={`${stock.symbol}-${stock.signal}-${index}`} className={`rounded-xl border p-3 ${tone.card}`}>
@@ -320,21 +340,11 @@ export default function Stocks() {
 
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
                   <button
-                    onClick={() => openTicket({
-                      symbol: stock.symbol,
-                      side: stock.side,
-                      orderType: "MARKET",
-                      price: numberValue(stock.entry),
-                      confidence,
-                      strategy,
-                      targets: [numberValue(stock.t1), numberValue(stock.t2)].filter((v) => v > 0),
-                      sl: numberValue(stock.sl),
-                    })}
-                    disabled={!levelsValid || usingSavedResults}
-                    title={usingSavedResults ? "Re-scan before staging a saved signal" : !levelsValid ? "Invalid entry, stop-loss, or target ordering" : "Open this signal in the review ticket"}
+                    onClick={() => setResearchSymbol(stock.symbol)}
+                    title="Load this symbol into the analysis panel"
                     className={`rounded-lg py-2 text-xs font-bold uppercase text-white transition disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500 ${tone.button}`}
                   >
-                    Review Trade
+                    Analyse Symbol
                   </button>
                   <button
                     onClick={() => addWatchlist(stock.symbol)}

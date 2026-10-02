@@ -16,30 +16,15 @@ class LiveOrderSafetyTests(unittest.TestCase):
         self.user = models.User(id=uuid.uuid4(), fy_id="safe-test")
         app.dependency_overrides[state.get_user] = lambda: self.user
         app.dependency_overrides[state.get_market_user] = lambda: self.user
-        self.original_place_order = trading_routes.fyers.place_order
-        self.original_modify_order = trading_routes.fyers.modify_order
-        self.original_cancel_order = trading_routes.fyers.cancel_order
-        self.original_exit_position = trading_routes.fyers.exit_position
-        self.original_squareoff_all = trading_routes.fyers.squareoff_all
         self.original_quotes = trading_routes.fyers.quotes
         self.original_get_tick = paper_routes.fyers.get_tick
         self.original_paper_balance = paper_routes.paper.balance
         self.original_paper_place = paper_routes.paper.place
         self.original_paper_exit = paper_routes.paper.exit
-        self.modify_order = AsyncMock(return_value={"ok": True})
-        self.cancel_order = AsyncMock(return_value={"ok": True})
-        self.exit_position = AsyncMock(return_value={"ok": True})
-        self.squareoff_all = AsyncMock(return_value={"ok": True})
-        self.place_order = AsyncMock(return_value={"ok": True})
         self.quotes = AsyncMock(return_value={"d": [{"symbol": "NSE:RELIANCE-EQ", "ltp": 100}]})
         self.paper_place = Mock(return_value={"ok": True, "id": "paper-1", "fill": 100})
         self.paper_exit = Mock(return_value={"status": "EXITED", "remainingQty": 0})
         self.paper_balance = Mock(return_value={"available": 100000, "netPnl": 0})
-        trading_routes.fyers.place_order = self.place_order
-        trading_routes.fyers.modify_order = self.modify_order
-        trading_routes.fyers.cancel_order = self.cancel_order
-        trading_routes.fyers.exit_position = self.exit_position
-        trading_routes.fyers.squareoff_all = self.squareoff_all
         trading_routes.fyers.quotes = self.quotes
         paper_routes.fyers.quotes = self.quotes
         def get_tick(symbol: str) -> dict[str, Any]:
@@ -53,11 +38,6 @@ class LiveOrderSafetyTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         app.dependency_overrides.clear()
-        trading_routes.fyers.place_order = self.original_place_order
-        trading_routes.fyers.modify_order = self.original_modify_order
-        trading_routes.fyers.cancel_order = self.original_cancel_order
-        trading_routes.fyers.exit_position = self.original_exit_position
-        trading_routes.fyers.squareoff_all = self.original_squareoff_all
         trading_routes.fyers.quotes = self.original_quotes
         paper_routes.fyers.get_tick = self.original_get_tick
         paper_routes.paper.balance = self.original_paper_balance
@@ -86,11 +66,6 @@ class LiveOrderSafetyTests(unittest.TestCase):
                     self.assertEqual(response.status_code, 403)
                     self.assertIn("Live trading is disabled", response.json()["detail"])
 
-        self.place_order.assert_not_awaited()
-        self.modify_order.assert_not_awaited()
-        self.cancel_order.assert_not_awaited()
-        self.exit_position.assert_not_awaited()
-        self.squareoff_all.assert_not_awaited()
 
     def test_live_mutation_routes_ignore_malformed_json_and_forbid(self) -> None:
         endpoints = [
@@ -106,11 +81,6 @@ class LiveOrderSafetyTests(unittest.TestCase):
                 response = self.client.request(method, path, content="{not-json", headers={"content-type": "application/json"})
                 self.assertEqual(response.status_code, 403)
 
-        self.place_order.assert_not_awaited()
-        self.modify_order.assert_not_awaited()
-        self.cancel_order.assert_not_awaited()
-        self.exit_position.assert_not_awaited()
-        self.squareoff_all.assert_not_awaited()
 
     def test_read_only_market_data_route_is_unaffected(self) -> None:
         response = self.client.post("/api/fyers/quotes", json={"symbols": ["NSE:RELIANCE-EQ"]})

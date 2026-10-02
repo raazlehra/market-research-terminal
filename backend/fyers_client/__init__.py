@@ -5,10 +5,10 @@ import httpx
 from dotenv import load_dotenv
 
 from .account import FyersAccountMixin
+from .account_activity import FyersAccountActivityMixin
 from .auth import FyersAuthMixin
 from .feed import FyersFeedMixin
 from .market_data import FyersMarketDataMixin
-from .orders import FyersOrdersMixin
 
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -17,7 +17,7 @@ load_dotenv(dotenv_path=env_path)
 class FyersClient(
     FyersAuthMixin,
     FyersMarketDataMixin,
-    FyersOrdersMixin,
+    FyersAccountActivityMixin,
     FyersAccountMixin,
     FyersFeedMixin,
 ):

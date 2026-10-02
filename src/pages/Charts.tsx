@@ -5,11 +5,11 @@ import {
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart2, BookmarkPlus, Search } from "lucide-react";
-import { useTicket, useWatchlist } from "../stores";
+import { useWatchlist } from "../stores";
 import { api } from "../lib/api";
 import { evaluateCandlestickPattern } from "../lib/candlestickPatterns";
 import { evaluateMarketRegime, MARKET_REGIME_DISPLAY } from "../lib/marketRegime";
-import { inr, isMarketOpen, pct } from "../lib/utils";
+import { inr, pct } from "../lib/utils";
 import { CandlestickShape } from "./charts/CandlestickShape";
 import { ChartTooltip } from "./charts/ChartTooltip";
 import {
@@ -107,7 +107,6 @@ export default function Charts() {
     vwap: true, ema20: true, ema50: false, previous: true, session: true, levels: false, rsi: true,
   });
   const previousCumulativeVolume = useRef<number | null>(null);
-  const openTicket = useTicket((state) => state.openFor);
   const watchlistSymbols = useWatchlist((state) => state.symbols);
   const resolution = RESOLUTIONS[timeframe] ?? RESOLUTIONS["5m"];
   const isDaily = timeframe === "1d";
@@ -181,7 +180,6 @@ export default function Charts() {
   const staleLimit = Math.max(120, resolution.seconds * 2);
   const isStale = staleSeconds === null || staleSeconds > staleLimit;
   const verified = data.length >= 2 && currentPrice !== null && currentPrice > 0 && !historyQuery.isError;
-  const canReview = verified && !isStale && isMarketOpen();
   const trend = changePct === null ? "--" : changePct > 0.2 ? "Bullish" : changePct < -0.2 ? "Bearish" : "Sideways";
 
   function loadSymbol(raw = symbolSearch) {
@@ -224,10 +222,7 @@ export default function Charts() {
           {(["candles", "line"] as const).map((value) => <button key={value} onClick={() => setChartMode(value)} className={`rounded px-2.5 py-1 capitalize ${chartMode === value ? "bg-slate-700 text-white" : "text-slate-500"}`}>{value}</button>)}
         </div>
         <span className={`rounded border px-2 py-1 text-[10px] font-semibold ${!verified || isStale ? "border-amber-500/20 bg-amber-500/10 text-amber-300" : "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"}`}>{freshness}</span>
-        <div className="ml-auto flex gap-2">
-          <button disabled={!canReview} title={!canReview ? "Requires fresh verified data while the market is open" : "Open a buy review ticket"} onClick={() => currentPrice && openTicket({ symbol, side: "BUY", orderType: "MARKET", price: currentPrice })} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500">Review Buy</button>
-          <button disabled={!canReview} title={!canReview ? "Requires fresh verified data while the market is open" : "Open a sell review ticket"} onClick={() => currentPrice && openTicket({ symbol, side: "SELL", orderType: "MARKET", price: currentPrice })} className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500">Review Sell</button>
-        </div>
+        <div className="ml-auto rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-200">Analysis only</div>
       </div>
 
       <div className="grid grid-cols-2 gap-y-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3 sm:grid-cols-3 lg:grid-cols-6">
