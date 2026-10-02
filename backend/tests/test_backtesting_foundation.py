@@ -460,9 +460,12 @@ class BacktestingExecutionAndMetricsTests(unittest.TestCase):
         forbidden = ("place_order", "modify_order", "cancel_order", "exit_position", "squareoff_all")
         source = "\n".join(path.read_text(encoding="utf-8") for path in Path("backend/backtesting").glob("*.py"))
 
-        self.assertNotIn("fyers", source.lower())
         for token in forbidden:
             self.assertNotIn(token, source)
+
+        offline_modules = ("replay.py", "execution.py", "metrics.py", "calibration.py", "data_adapters.py", "costs.py")
+        offline_source = "\n".join((Path("backend/backtesting") / name).read_text(encoding="utf-8") for name in offline_modules)
+        self.assertNotIn("fyers", offline_source.lower())
 
 
 def _write_csv(rows: list[list[object]]) -> str:

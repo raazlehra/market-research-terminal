@@ -20,6 +20,7 @@ tmp/
 temp/
 .cache/
 backtest-results/
+backtest-data/
 backend/backtesting/results/
 
 # Build output and dependencies
