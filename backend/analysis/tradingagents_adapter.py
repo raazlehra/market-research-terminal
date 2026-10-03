@@ -120,6 +120,8 @@ FINAL_REASONING = {
 
 
 class AIOverlay(BaseModel):
+    signal_type: Literal["analysis_only"] = "analysis_only"
+    execution_enabled: Literal[False] = False
     signal: AnalysisSignal
     confidence: int
     technical_summary: str
@@ -175,12 +177,17 @@ class TradingAgentsConfig:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
 
 
-def _bounded_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+def bounded_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     chain = snapshot.get("chain") if isinstance(snapshot.get("chain"), list) else []
     futures = snapshot.get("futures") if isinstance(snapshot.get("futures"), dict) else {}
+    existing_options = (
+        snapshot.get("options") if isinstance(snapshot.get("options"), dict) else {}
+    )
     option_summary = {
-        "row_count": len(chain),
-        "important_strikes": snapshot.get("important_strikes", []),
+        "row_count": existing_options.get("row_count", len(chain)),
+        "important_strikes": existing_options.get(
+            "important_strikes", snapshot.get("important_strikes", [])
+        ),
     }
     futures_summary = {
         key: futures.get(key)
@@ -197,6 +204,9 @@ def _bounded_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
         "data_freshness": snapshot.get("data_freshness"),
         "data_sources": snapshot.get("data_sources", []),
     }
+
+
+_bounded_snapshot = bounded_snapshot
 
 
 DIRECTIONAL_INDICATORS = {
@@ -487,7 +497,7 @@ class TradingAgentsAdapter:
         if not self.config.enabled:
             raise TradingAgentsUnavailable("Optional AI analysis is disabled")
 
-        bounded = _bounded_snapshot(snapshot)
+        bounded = bounded_snapshot(snapshot)
         flat = _flatten(bounded)
         role_snapshots = {
             name: _role_bounded_snapshot(bounded, name)

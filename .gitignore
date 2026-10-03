@@ -6,6 +6,7 @@ backend/.env.*
 !**/.env.example
 
 # Local tool/runtime state
+.agents/
 .repomind/
 .git-empty-backup-20260901/
 backend/paper_state.json
@@ -30,6 +31,7 @@ build/
 
 # Python environments and caches
 .venv/
+.venv-ai/
 venv/
 __pycache__/
 **/__pycache__/

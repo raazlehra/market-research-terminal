@@ -33,7 +33,7 @@ def reports(d: DbSession, u: CurrentUser, range: str = "30d") -> dict[str, Any]:
     since = utcnow() - timedelta(days=days)
     paper_outcomes = d.query(models.PaperTradeOutcome).filter(
         models.PaperTradeOutcome.user_id == u.id,
-        models.PaperTradeOutcome.closed == True,
+        models.PaperTradeOutcome.closed.is_(True),
         models.PaperTradeOutcome.created_at >= since
     ).all()
 

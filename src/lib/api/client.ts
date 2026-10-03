@@ -28,10 +28,6 @@ export class ApiClient {
     return err.detail || err.message || `${fallback} (${res.status})`;
   }
 
-  private liveTradingDisabled(): never {
-    throw new Error("Live trading is disabled. Paper trading and read-only market analysis are available.");
-  }
-
   async getHealth() {
     const res = await fetch(`${this.getBaseUrl()}/api/health`, { 
       headers: this.getHeaders(),
@@ -368,27 +364,6 @@ export class ApiClient {
     });
     if (!res.ok) throw new Error(await this.readError(res, "Failed to fetch paper positions."));
     return await res.json();
-  }
-
-  // Trading workflow - Order management
-  async modifyOrder(orderId: string, payload: any) {
-    void orderId;
-    void payload;
-    return this.liveTradingDisabled();
-  }
-
-  async cancelOrder(orderId: string) {
-    void orderId;
-    return this.liveTradingDisabled();
-  }
-
-  async exitPosition(payload: any) {
-    void payload;
-    return this.liveTradingDisabled();
-  }
-
-  async squareOffAll() {
-    return this.liveTradingDisabled();
   }
 
   // Trading workflow - Trade journal

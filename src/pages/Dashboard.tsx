@@ -23,7 +23,9 @@ import {
   usePositions,
   useTradebook,
 } from "../hooks";
-import { useAutoBot, useMarket, useSettings, useTicket } from "../stores";
+import { useMarket, useSettings } from "../stores";
+import { useTicket } from "../stores/ticketStore";
+import { useAutoBot } from "../stores/autoBotStore";
 import { inr, pct, signColor } from "../lib/utils";
 
 import { StatCard } from "./dashboard/DashboardCards";

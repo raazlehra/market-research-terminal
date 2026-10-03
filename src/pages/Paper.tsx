@@ -11,7 +11,8 @@ import {
 } from "../hooks";
 import { api } from "../lib/api";
 import { buildPaperWalletSummary, openPaperPositions, selectedOutcomeBucket } from "../lib/paperWalletModel";
-import { useMarket, useTicket } from "../stores";
+import { useMarket } from "../stores";
+import { useTicket } from "../stores/ticketStore";
 import { ConfidenceBucketsPanel } from "./paper/ConfidenceBucketsPanel";
 import { PaperActivityTables } from "./paper/PaperActivityTables";
 import { PaperPositionsPanel } from "./paper/PaperPositionsPanel";

@@ -106,7 +106,7 @@ export default function SystemCheck() {
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg shadow-blue-500/20"><Zap className="h-5 w-5" /></div>
-            <div><div className="font-semibold">FnO Terminal</div><div className="text-[10px] uppercase tracking-[.2em] text-slate-500">Pre-flight console</div></div>
+            <div><div className="font-semibold">Market Research Terminal</div><div className="text-[10px] uppercase tracking-[.2em] text-slate-500">Pre-flight console</div></div>
           </div>
           <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${backendOnline ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-300" : "border-slate-700 bg-slate-900/70 text-slate-400"}`}>
             <span className={`h-2 w-2 rounded-full ${backendOnline ? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.8)]" : "bg-slate-600"}`} />

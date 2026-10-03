@@ -1,8 +1,8 @@
 # Read-only market research architecture
 
-## Baseline and preserved work
+## Scope
 
-This is a React/Vite research terminal backed by FastAPI, SQLAlchemy, FYERS OAuth/REST/WebSocket market data, deterministic local indicators, Binance public crypto data, and separate local paper/backtesting modules. The phase began on branch `codex/fno-backtesting-calibration-phase2` at commit `2016ecb741bea7d21300021bd7afd6e424dfc7a6`. Pre-existing backtesting changes are intentionally outside this phase and remain uncommitted.
+This is a React/Vite research terminal backed by FastAPI, SQLAlchemy, FYERS OAuth/REST/WebSocket market data, deterministic local indicators, Binance public crypto data, and separate local backtesting modules. The active application is permanently read-only; historical replay uses simulated execution only.
 
 ## Permanent read-only boundary
 
@@ -38,7 +38,16 @@ Deterministic F&O analysis can compare the verified future trend with the underl
 
 ## Actual TradingAgents integration
 
-The optional dependency is pinned immutably to TradingAgents `v0.5.2`, commit `5eb50854dad299381861632aa34014448b4260fc`, rather than floating `main`. Upstream requires Python 3.11+, uses LangGraph 1.2+, supports parallel analysts, provider abstraction, structured output, retry/token limits, and checkpoint packages, and is Apache-2.0 licensed.
+The optional dependency is pinned immutably to TradingAgents `v0.5.2`, commit `5eb50854dad299381861632aa34014448b4260fc`, rather than floating `main`. It is installed only in a separate local AI-worker environment. FYERS 3.1.18 requires `requests==2.31.0`, while this TradingAgents revision requires `requests>=2.32.4`; no standards-compliant single Python environment can satisfy both constraints.
+
+The explicit request flow is:
+
+```text
+Run AI Analysis -> main backend -> loopback-only AI worker -> TradingAgents/Ollama
+                <- validated structured result <-
+```
+
+The main backend sends only the already bounded analysis snapshot. The worker has no FYERS SDK, broker session, access token, client secret, encryption key, Binance credential, wallet, database, or execution tool. A missing or mismatched worker fails safely while deterministic research remains available.
 
 The application uses actual upstream code from:
 
@@ -51,7 +60,7 @@ It deliberately does not instantiate the upstream trading graph, trader, portfol
 
 All outputs pass strict Pydantic validation. Evidence references must resolve to the flattened snapshot, sources must be a subset of supplied sources, numeric claims must exist in the snapshot, and execution language is rejected. Timeout, malformed output, provider failure, or validation failure fails closed to local deterministic analysis.
 
-`AI_ANALYSIS_ENABLED=false` by default. No LLM call occurs on startup, navigation, quote refresh, chart refresh, or WebSocket ticks. Only the explicit `Run AI Analysis` request sets `ai_requested=true`. Results are cached for five minutes by asset, instrument, horizon, depth, snapshot hash, and AI configuration fingerprint.
+`AI_ANALYSIS_ENABLED=false` by default. No worker or LLM call occurs on startup, navigation, quote refresh, chart refresh, or WebSocket ticks. Only the explicit `Run AI Analysis` request sets `ai_requested=true`. Results are cached for five minutes by asset, instrument, horizon, depth, snapshot hash, and an AI configuration fingerprint containing the TradingAgents version, immutable revision, provider, model, base URL, and token configuration. Main and worker fingerprint mismatches are rejected.
 
 ## Asset inputs
 
@@ -98,4 +107,4 @@ FYERS limit source: <https://support.fyers.in/portal/en/kb/articles/is-fyers-pri
 
 ## Remaining limitations
 
-A fresh interactive FYERS OAuth login is required whenever the stored daily/session token expires; automated tests cannot replace live schema acceptance. The local environment has no configured LLM provider/model, so actual upstream imports and adapter behavior can be tested without incurring model cost, but real model inference requires the user to configure a local Ollama model or explicitly approved hosted provider. No paid data/research service is used.
+A fresh interactive FYERS OAuth login is required whenever the stored provider token expires; automated tests cannot replace live schema acceptance. No model binary is shipped with the repository: real inference requires the user to configure a local Ollama model or an explicitly selected hosted provider. Hosted providers may charge, while normal dashboard operation and deterministic analysis require no LLM.

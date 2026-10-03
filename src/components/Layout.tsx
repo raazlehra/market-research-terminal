@@ -22,7 +22,8 @@ import {
   Pause, 
   Radio
 } from "lucide-react";
-import { useAuth, useSettings, useAutoBot } from "../stores";
+import { useAuth, useSettings } from "../stores";
+import { useAutoBot } from "../stores/autoBotStore";
 import { useHealth, usePaperBalance, usePaperOutcomes } from "../hooks";
 import { Ticket } from "./Ticket";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -148,8 +149,8 @@ export function Layout() {
             <Radio className="h-4 w-4 text-emerald-300" />
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-bold tracking-tight text-white">FnO Terminal</div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500">Fyers v3 / Pro Alpha</div>
+            <div className="truncate text-sm font-bold tracking-tight text-white">Market Research Terminal</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500">Read-only research</div>
           </div>
         </div>
 

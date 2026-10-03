@@ -59,53 +59,6 @@ export function useReports(range: string) {
   });
 }
 
-export function useCancelOrder() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => api.cancelOrder(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      qc.invalidateQueries({ queryKey: ["positions"] });
-      qc.invalidateQueries({ queryKey: ["tradebook"] });
-    },
-  });
-}
-
-export function useModifyOrder() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => api.modifyOrder(id, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      qc.invalidateQueries({ queryKey: ["positions"] });
-      qc.invalidateQueries({ queryKey: ["tradebook"] });
-    },
-  });
-}
-
-export function useExitPosition() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: { symbol: string; productType?: string }) => api.exitPosition(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["positions"] });
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      qc.invalidateQueries({ queryKey: ["tradebook"] });
-    },
-  });
-}
-
-export function useSquareOffAll() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => api.squareOffAll(),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["positions"] });
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      qc.invalidateQueries({ queryKey: ["tradebook"] });
-    },
-  });
-}
 export function usePaperBalance(options?: any) {
   return useQuery({
     queryKey: ["paperBalance"],

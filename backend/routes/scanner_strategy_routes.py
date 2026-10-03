@@ -1,6 +1,6 @@
 from typing import Any, Literal, Protocol, cast
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..state import fyers, scanner

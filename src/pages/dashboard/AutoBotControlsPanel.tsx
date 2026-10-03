@@ -1,7 +1,7 @@
 import { OPTION_INDEXES } from "../../lib/optionChainModel";
 import { SCANNERS } from "../../lib/scanners";
 import { MARKET_REGIME_DISPLAY, type MarketRegime } from "../../lib/marketRegime";
-import { useAutoBot } from "../../stores";
+import { useAutoBot } from "../../stores/autoBotStore";
 import type { BotExecutionMode, CandleConfirmationMode, OptionSizingMode } from "../../stores/autoBot/types";
 import { TIMEFRAMES } from "../stocks/helpers";
 

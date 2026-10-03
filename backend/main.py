@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     alerts.stop()
 
 
-app = FastAPI(title="FnO Terminal Backend", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Market Research Terminal Backend", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

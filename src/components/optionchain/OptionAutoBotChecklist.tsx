@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getActiveCooldowns, type ActiveCooldown } from "../../stores/autoBot/cooldown";
-import { useAutoBot, useMarket, useSettings } from "../../stores";
+import { useMarket, useSettings } from "../../stores";
+import { useAutoBot } from "../../stores/autoBotStore";
 import type { ChartRuleResult } from "../../lib/chartRules";
 import type { ExpiryRuleResult } from "../../lib/expiryRules";
 import type { OptionLiquidityResult } from "../../lib/liquidityRules";

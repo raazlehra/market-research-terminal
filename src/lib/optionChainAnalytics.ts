@@ -1,4 +1,4 @@
-import { useTicket } from "../stores";
+import { useTicket } from "../stores/ticketStore";
 import { isMarketOpen } from "./utils";
 
 export type OpenOptionPayload = {

@@ -18,7 +18,7 @@ import { MARKET_REGIME_DISPLAY } from "../../lib/marketRegime";
 import { patternAdjustmentFromRow, patternGuardrailFromOutcomes } from "../../lib/patternConfidence";
 import { summarizePatternLearningAudit } from "../../lib/patternLearningAudit";
 import { summarizePatternOutcomes } from "../../lib/patternOutcomeTracker";
-import { useAutoBot } from "../../stores";
+import { useAutoBot } from "../../stores/autoBotStore";
 import { AutoBotControlsPanel } from "./AutoBotControlsPanel";
 import { AutoBotDecisionLogPanel } from "./AutoBotDecisionLogPanel";
 import { AutoBotSafetyPanel } from "./AutoBotSafetyPanel";

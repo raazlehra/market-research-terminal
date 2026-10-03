@@ -1,6 +1,6 @@
 import { usePositions } from "../hooks";
 import { inr, signColor } from "../lib/utils";
-import { useTicket } from "../stores";
+import { useTicket } from "../stores/ticketStore";
 import { Plus, Minus, FlipHorizontal } from "lucide-react";
 
 export default function Positions() {

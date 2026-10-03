@@ -1,3 +1,9 @@
-# Optional explicit-click AI research only. Not required for normal dashboards.
+# Install only in the optional AI worker environment, never in the FYERS backend venv.
+# The two upstream packages have mutually exclusive requests constraints.
+fastapi>=0.115,<1
+httpx>=0.27,<1
+pydantic>=2.8,<3
+python-dotenv>=1,<2
+uvicorn>=0.30,<1
 # TradingAgents v0.5.2 tag commit, pinned to an immutable Git commit.
 tradingagents @ git+https://github.com/TauricResearch/TradingAgents.git@5eb50854dad299381861632aa34014448b4260fc

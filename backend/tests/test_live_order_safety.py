@@ -4,6 +4,9 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from backend.main import app
 from backend import models
@@ -14,6 +17,22 @@ from backend.routes import paper_routes, trading_routes
 class LiveOrderSafetyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.user = models.User(id=uuid.uuid4(), fy_id="safe-test")
+        self.engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        models.Base.metadata.create_all(self.engine)
+        self.session_factory = sessionmaker(bind=self.engine)
+
+        def test_db():
+            database = self.session_factory()
+            try:
+                yield database
+            finally:
+                database.close()
+
+        app.dependency_overrides[state.db] = test_db
         app.dependency_overrides[state.get_user] = lambda: self.user
         app.dependency_overrides[state.get_market_user] = lambda: self.user
         self.original_quotes = trading_routes.fyers.quotes
@@ -21,6 +40,7 @@ class LiveOrderSafetyTests(unittest.TestCase):
         self.original_paper_balance = paper_routes.paper.balance
         self.original_paper_place = paper_routes.paper.place
         self.original_paper_exit = paper_routes.paper.exit
+        self.original_is_kill_switched = paper_routes.risk.is_kill_switched
         self.quotes = AsyncMock(return_value={"d": [{"symbol": "NSE:RELIANCE-EQ", "ltp": 100}]})
         self.paper_place = Mock(return_value={"ok": True, "id": "paper-1", "fill": 100})
         self.paper_exit = Mock(return_value={"status": "EXITED", "remainingQty": 0})
@@ -34,15 +54,18 @@ class LiveOrderSafetyTests(unittest.TestCase):
         paper_routes.paper.balance = self.paper_balance
         paper_routes.paper.place = self.paper_place
         paper_routes.paper.exit = self.paper_exit
+        paper_routes.risk.is_kill_switched = Mock(return_value=False)
         self.client = TestClient(app)
 
     def tearDown(self) -> None:
         app.dependency_overrides.clear()
+        self.engine.dispose()
         trading_routes.fyers.quotes = self.original_quotes
         paper_routes.fyers.get_tick = self.original_get_tick
         paper_routes.paper.balance = self.original_paper_balance
         paper_routes.paper.place = self.original_paper_place
         paper_routes.paper.exit = self.original_paper_exit
+        paper_routes.risk.is_kill_switched = self.original_is_kill_switched
 
     def test_live_mutation_routes_are_always_forbidden(self) -> None:
         endpoints = [

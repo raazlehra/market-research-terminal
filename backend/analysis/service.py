@@ -8,10 +8,10 @@ from typing import Any
 from .models import AgentEvidence, AnalysisRequest, AnalysisResult, AnalysisSignal, AssetType
 from .providers import BinancePublicMarketDataProvider, FyersReadOnlyMarketDataProvider
 from .tradingagents_adapter import (
-    TradingAgentsAdapter,
     TradingAgentsOutputRejected,
     TradingAgentsUnavailable,
 )
+from .worker_client import AIWorkerClient
 
 
 class ExecutionDisabledError(RuntimeError):
@@ -32,11 +32,11 @@ class AnalysisService:
         self,
         market_provider: FyersReadOnlyMarketDataProvider,
         crypto_provider: BinancePublicMarketDataProvider,
-        ai_adapter: TradingAgentsAdapter | None = None,
+        ai_adapter: Any | None = None,
     ) -> None:
         self.market_provider = market_provider
         self.crypto_provider = crypto_provider
-        self.ai_adapter = ai_adapter or TradingAgentsAdapter()
+        self.ai_adapter = ai_adapter or AIWorkerClient()
         self._cache: dict[str, tuple[float, AnalysisResult]] = {}
 
     async def market_snapshot(self, request: AnalysisRequest) -> dict[str, Any]:

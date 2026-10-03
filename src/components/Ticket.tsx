@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useMarket, useSettings, useTicket } from "../stores";
+import { useMarket, useSettings } from "../stores";
+import { useTicket } from "../stores/ticketStore";
 import { api } from "../lib/api";
 import { fmtTime, getLotSizeFromSymbol, inr, isMarketOpen } from "../lib/utils";
 import { InfoCard, PnlPanel, RiskPanel } from "./ticket/TicketPanels";

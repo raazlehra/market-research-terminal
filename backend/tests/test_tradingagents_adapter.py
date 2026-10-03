@@ -2,7 +2,9 @@ import asyncio
 import hashlib
 import json
 import os
+import sys
 import unittest
+from types import ModuleType
 from unittest.mock import patch
 
 from backend.analysis.indicators import calculate_indicators
@@ -251,8 +253,23 @@ class TradingAgentsAdapterTests(unittest.TestCase):
                 methods.append(method)
                 return FakeStructured()
 
+        structured_module = ModuleType("tradingagents.agents.structured")
+        structured_module.bind_structured = lambda llm, schema, name: llm.with_structured_output(schema)
+        structured_module.invoke_structured = (
+            lambda structured, prompt, name: structured.invoke(prompt)
+        )
+        agents_module = ModuleType("tradingagents.agents")
+        tradingagents_module = ModuleType("tradingagents")
+        module_overrides = {
+            "tradingagents": tradingagents_module,
+            "tradingagents.agents": agents_module,
+            "tradingagents.agents.structured": structured_module,
+        }
         adapter = TradingAgentsAdapter(config(), llm=FakeLlm())
-        result = asyncio.run(adapter._invoke(SpecialistOutput, "snapshot", "Technical Analyst"))
+        with patch.dict(sys.modules, module_overrides):
+            result = asyncio.run(
+                adapter._invoke(SpecialistOutput, "snapshot", "Technical Analyst")
+            )
 
         self.assertEqual(result.role, SpecialistRole.TECHNICAL)
         self.assertEqual(methods[-1], "json_schema")

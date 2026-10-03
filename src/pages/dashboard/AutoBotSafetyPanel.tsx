@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { getActiveCooldowns, type ActiveCooldown } from "../../stores/autoBot/cooldown";
-import { useAutoBot, useMarket, useSettings } from "../../stores";
+import { useMarket, useSettings } from "../../stores";
+import { useAutoBot } from "../../stores/autoBotStore";
 import { inr } from "../../lib/utils";
 
 function StatusRow({ label, ok, value }: { label: string; ok: boolean; value: string }) {
