@@ -1,5 +1,7 @@
 # Market Research Terminal
 
+[![CI](https://github.com/raazlehra/market-research-terminal/actions/workflows/ci.yml/badge.svg)](https://github.com/raazlehra/market-research-terminal/actions/workflows/ci.yml)
+
 Market Research Terminal is a local-first, read-only research application for Indian stocks, F&O, futures, and public cryptocurrency market data. It combines verified market snapshots, deterministic Python indicators, optional local multi-agent analysis, and offline historical backtesting.
 
 > **This project is for market research and analysis only. It does not provide live order-placement capability.**
