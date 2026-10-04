@@ -34,9 +34,13 @@ class FyersFeedMixin:
             from fyers_apiv3.FyersWebsocket import data_ws
 
             def on_message(msg: dict[str, Any]) -> None:
-                print("FYERS RAW MSG:", msg)
-
                 sym = msg.get("symbol")
+                log.debug(
+                    "FYERS market feed message received: kind=%s fields=%d symbol_present=%s",
+                    "symbol_update" if sym else "non_symbol_event",
+                    len(msg),
+                    bool(sym),
+                )
                 if not sym:
                     return
 
@@ -54,7 +58,10 @@ class FyersFeedMixin:
                     "ltt": msg.get("feed_time"),
                 }
 
-                print("BROADCASTING:", tick)
+                log.debug(
+                    "FYERS market feed tick normalized: populated_fields=%d",
+                    sum(value is not None for value in tick.values()),
+                )
 
                 self._ticks[sym] = tick
 
@@ -69,6 +76,10 @@ class FyersFeedMixin:
 
                 feed = self._feed
                 if self._symbols_subscribed and feed is not None:
+                    log.debug(
+                        "FYERS feed subscription updated: symbols=%d data_type=SymbolUpdate",
+                        len(self._symbols_subscribed),
+                    )
                     feed.subscribe(
                         symbols=list(self._symbols_subscribed),
                         data_type="SymbolUpdate"
@@ -108,8 +119,11 @@ class FyersFeedMixin:
         self._feed = None
     async def subscribe(self, symbols: list[str]) -> None:
         self._symbols_subscribed.update(symbols)
-        print("SUBSCRIBING:", symbols)
-        print("FEED EXISTS:", self._feed is not None)
+        log.debug(
+            "FYERS feed subscription requested: symbols=%d feed_active=%s data_type=SymbolUpdate",
+            len(symbols),
+            self._feed is not None,
+        )
         if self._feed:
             try:
                 await asyncio.to_thread(
@@ -117,10 +131,19 @@ class FyersFeedMixin:
                     symbols=symbols,
                     data_type="SymbolUpdate"
                 )
-            except Exception as e:
-                log.error(f"Subscribe failed: {e}")
+            except Exception as exc:
+                log.error(
+                    "FYERS feed subscription failed: error_type=%s",
+                    type(exc).__name__,
+                )
     async def unsubscribe(self, symbols: list[str]) -> None:
         self._symbols_subscribed -= set(symbols)
+
+        log.debug(
+            "FYERS feed unsubscribe requested: symbols=%d feed_active=%s data_type=SymbolUpdate",
+            len(symbols),
+            self._feed is not None,
+        )
 
         if self._feed:
             try:
@@ -128,6 +151,9 @@ class FyersFeedMixin:
                     self._feed.unsubscribe,
                     symbols=symbols
                 )
-            except Exception as e:
-                log.error(f"Unsubscribe failed: {e}")
+            except Exception as exc:
+                log.error(
+                    "FYERS feed unsubscribe failed: error_type=%s",
+                    type(exc).__name__,
+                )
 
