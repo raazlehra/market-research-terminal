@@ -43,6 +43,30 @@ See [Read-only market research architecture](docs/read-only-market-research.md) 
 
 Deterministic calculations are authoritative for factual numeric values. Optional AI may interpret those values, but it is not allowed to manufacture facts or execute trades.
 
+## Screenshots
+
+These screenshots use deterministic public-safe demonstration data and contain no brokerage credentials or real account information.
+
+### Dashboard
+
+![Market Research Terminal dashboard](docs/assets/screenshots/dashboard.png)
+
+### Stocks
+
+![Stock research view](docs/assets/screenshots/stocks.png)
+
+### F&O
+
+![F&O research view](docs/assets/screenshots/fno.png)
+
+### Crypto
+
+![Crypto market research view](docs/assets/screenshots/crypto.png)
+
+### Optional AI analysis
+
+![Local AI analysis view](docs/assets/screenshots/ai-analysis.png)
+
 ## Prerequisites
 
 - Git.
