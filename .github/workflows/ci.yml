@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Install backend test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements-dev.txt
+
+      - name: Check backend dependency consistency
+        run: python -m pip check
+
+      - name: Verify backend dependency isolation
+        shell: pwsh
+        run: |
+          @'
+          import re
+          from importlib.metadata import distributions, version
+
+          normalize = lambda name: re.sub(r"[-_.]+", "-", name).lower()
+          installed = {
+              normalize(dist.metadata["Name"])
+              for dist in distributions()
+              if dist.metadata["Name"]
+          }
+
+          assert version("fyers-apiv3") == "3.1.18"
+          assert version("requests") == "2.31.0"
+          assert "tradingagents" not in installed
+          print("Backend dependency isolation verified.")
+          '@ | python -
+
+      - name: Compile backend
+        run: python -m compileall -q backend
+
+      - name: Lint backend
+        run: python -m ruff check backend
+
+      - name: Test backend
+        run: python -m pytest backend/tests -q
+
+  ai-environment:
+    name: ai-environment
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements-ai.txt
+
+      - name: Install AI dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements-ai.txt
+
+      - name: Check AI dependency consistency
+        run: python -m pip check
+
+      - name: Verify TradingAgents provenance and adapter imports
+        shell: pwsh
+        run: |
+          @'
+          import json
+          import re
+          from importlib.metadata import distribution, distributions, version
+
+          expected_commit = "5eb50854dad299381861632aa34014448b4260fc"
+          normalize = lambda name: re.sub(r"[-_.]+", "-", name).lower()
+          installed = {
+              normalize(dist.metadata["Name"])
+              for dist in distributions()
+              if dist.metadata["Name"]
+          }
+
+          tradingagents = distribution("tradingagents")
+          direct_url_text = tradingagents.read_text("direct_url.json")
+          assert tradingagents.version == "0.5.2"
+          assert direct_url_text is not None
+
+          direct_url = json.loads(direct_url_text)
+          vcs_info = direct_url.get("vcs_info", {})
+          assert vcs_info.get("vcs") == "git"
+          assert vcs_info.get("commit_id") == expected_commit
+          assert "fyers-apiv3" not in installed
+
+          from tradingagents.llm_clients.factory import (
+              build_llm_kwargs,
+              create_llm_client,
+          )
+          from tradingagents.agents.structured import (
+              bind_structured,
+              invoke_structured,
+          )
+
+          helpers = (
+              create_llm_client,
+              build_llm_kwargs,
+              bind_structured,
+              invoke_structured,
+          )
+          assert all(callable(helper) for helper in helpers)
+          print(
+              "TradingAgents",
+              tradingagents.version,
+              vcs_info["commit_id"],
+              "requests",
+              version("requests"),
+          )
+          '@ | python -
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=low
+
+      - name: Type-check frontend
+        run: npx tsc --noEmit
+
+      - name: Build frontend
+        run: npm run build
